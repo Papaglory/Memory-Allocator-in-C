@@ -22,7 +22,14 @@ typedef struct {
 
 LinkedList* create_list();
 
-void add(LinkedList* list, Node node);
+/*
+* @brief Add a node at the end of the list.
+*
+* @param1 The linked list to append the node.
+* @param2 The node to be appended.
+* @return Return pointer to the list.
+*/
+LinkedList* add(LinkedList* list, Node* node);
 
 void delete_node(LinkedList* list, size_t id);
 

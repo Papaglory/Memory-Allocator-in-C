@@ -19,3 +19,41 @@ LinkedList* create_list() {
 
     return list;
 }
+
+
+LinkedList* add(LinkedList* list, Node* node) {
+
+    if (list == NULL || node == NULL) {
+
+        // There is nothing to operate on
+        return NULL;
+
+    }
+
+    if (list->head == NULL) {
+
+        list->head = node;
+        list->tail = node;
+
+        node->next = NULL;
+        node->id = list->size;
+
+        list->size++;
+
+    } else {
+
+        Node* tail_node = list->tail;
+
+        // Overwrite tail node
+        list->tail = node;
+
+        // Insert new node
+        tail_node->next = node;
+        node->next = NULL;
+        node->id = list->size;
+
+        list->size++;
+
+    }
+
+}
