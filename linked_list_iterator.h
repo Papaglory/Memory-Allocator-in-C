@@ -2,9 +2,7 @@
 #define LINKEDLISTITERATOR_H
 
 #include "linked_list.h"
-
-// Forward declaration
-typedef struct Node Node;
+#include "node.h"
 
 typedef struct {
 
@@ -14,6 +12,6 @@ typedef struct {
 
 LinkedListIterator* create_iterator(LinkedList* list);
 
-LinkedListIterator* iterate(LinkedList* list, LinkedListIterator* iterator);
+Node* iterate(LinkedListIterator* iterator);
 
 #endif // LINKEDLISTITERATOR_H
