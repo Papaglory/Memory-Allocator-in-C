@@ -3,6 +3,8 @@
 
 #include <stddef.h>
 
+// Forward declaration used to reference Node
+// without having to include the whole header file.
 typedef struct Node Node;
 
 typedef struct {
@@ -24,7 +26,7 @@ void add(LinkedList list, Node node);
 
 void delete(size_t id);
 
-size_t search(Value val);
+size_t search_by_value(void* data, size_t data_size);
 
 Node* get_head(LinkedList list);
 

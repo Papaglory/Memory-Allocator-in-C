@@ -2,9 +2,8 @@
 #define NODE_H
 
 #include <stddef.h>
-#include <tuple.h>
 
-// Forward declaration of Node
+// Forward declaration
 typedef struct Node Node;
 
 typedef struct {
