@@ -36,9 +36,9 @@ LinkedList* add(LinkedList* list, Node* node) {
         list->tail = node;
 
         node->next = NULL;
-        node->id = list->size;
 
         list->size++;
+        node->id = list->size;
 
     } else {
 
@@ -50,10 +50,44 @@ LinkedList* add(LinkedList* list, Node* node) {
         // Insert new node
         tail_node->next = node;
         node->next = NULL;
-        node->id = list->size;
 
         list->size++;
+        node->id = list->size;
 
     }
 
+    return list;
+
 }
+
+
+
+LinkedList* delete_node(LinkedList* list, size_t id) {
+
+    if (list == NULL) {
+
+        return NULL;
+
+    }
+
+    if (list->size == 0) {
+
+        // There is nothing to delete
+        return list;
+
+    }
+
+    if (list->size < id) {
+
+        // No Node with such an id exists in the list
+        return list;
+
+    }
+
+
+
+
+    return list;
+
+}
+

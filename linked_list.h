@@ -31,7 +31,7 @@ LinkedList* create_list();
 */
 LinkedList* add(LinkedList* list, Node* node);
 
-void delete_node(LinkedList* list, size_t id);
+LinkedList* delete_node(LinkedList* list, size_t id);
 
 size_t search_by_value(void* data, size_t data_size);
 
