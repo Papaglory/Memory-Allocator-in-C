@@ -18,18 +18,18 @@ typedef struct {
     // Size of the list
     size_t size;
 
-} LinkedList
+} LinkedList;
 
-void create_list();
+LinkedList* create_list();
 
-void add(LinkedList list, Node node);
+void add(LinkedList* list, Node node);
 
-void delete(size_t id);
+void delete_node(LinkedList* list, size_t id);
 
 size_t search_by_value(void* data, size_t data_size);
 
-Node* get_head(LinkedList list);
+Node* get_head(LinkedList* list);
 
-Node* get_tail(LinkedList list);
+Node* get_tail(LinkedList* list);
 
 #endif // LINKED_LIST_H

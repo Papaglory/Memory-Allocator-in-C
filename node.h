@@ -3,10 +3,7 @@
 
 #include <stddef.h>
 
-// Forward declaration
-typedef struct Node Node;
-
-typedef struct {
+typedef struct Node {
 
     // Payload of the node
     void* data;
@@ -18,6 +15,6 @@ typedef struct {
     // ID of the node
     size_t id;
 
-} Node
+} Node;
 
 #endif // NODE_H
