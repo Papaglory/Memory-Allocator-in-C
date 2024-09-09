@@ -17,6 +17,6 @@ typedef struct {
     // Data size of 'snd_data'
     size_t snd_size;
 
-} Tuple
+} Tuple;
 
 #endif // TUPLE_H

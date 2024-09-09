@@ -2,12 +2,8 @@
 #define NODE_H
 
 #include <stddef.h>
-#include <tuple.h>
 
-// Forward declaration of Node
-typedef struct Node Node;
-
-typedef struct {
+typedef struct Node {
 
     // Payload of the node
     void* data;
@@ -19,6 +15,6 @@ typedef struct {
     // ID of the node
     size_t id;
 
-} Node
+} Node;
 
 #endif // NODE_H
