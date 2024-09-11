@@ -2,6 +2,7 @@
 #include <stdlib.h>
 #include "linked_list.h"
 #include "node.h"
+#include "linked_list_iterator.h"
 
 LinkedList* create_list() {
 
@@ -19,7 +20,6 @@ LinkedList* create_list() {
 
     return list;
 }
-
 
 LinkedList* add(LinkedList* list, Node* node) {
 
@@ -60,34 +60,75 @@ LinkedList* add(LinkedList* list, Node* node) {
 
 }
 
-
-
 LinkedList* delete_node(LinkedList* list, size_t id) {
 
-    if (list == NULL) {
+    // Check: list exists, non-empty, id within range
+    if (list == NULL || list->size == 0 || list->size < id) {
 
         return NULL;
 
     }
 
-    if (list->size == 0) {
+    // Create an iterator for the list
+    LinkedListIterator* iterator = create_iterator(list);
 
-        // There is nothing to delete
+    Node* prev = iterator->current;
+    Node* current = iterate(iterator);
+
+    // Check if head corresponds with 'id'
+    if (prev->id == id) {
+
+        // Nominate new head
+        list->head = current;
+        list->size--;
+
+        // Update tail if this was the only Node
+        if (list->size == 0) {
+
+            list->tail = NULL;
+
+        }
+
+        // Free the Node from memory
+        free(prev);
+        free(iterator);
+
         return list;
 
     }
 
-    if (list->size < id) {
+    // Search remaining part of list
+    while(current != NULL) {
 
-        // No Node with such an id exists in the list
-        return list;
+        // Check if it is the Node to be removed
+        if (current->id == id) {
+
+            // Remove target from reference chain
+            prev->next = current->next;
+
+            // Check if prev is the new tail
+            if (current->next == NULL) {
+
+                list->tail = prev;
+
+            }
+
+            // Free the Node from memory
+            free(current);
+            list->size--;
+
+            break;
+
+        }
+
+        // Iterate to the next Node
+        prev = current;
+        current = iterate(iterator);
 
     }
 
-
-
+    free(iterator);
 
     return list;
 
 }
-
