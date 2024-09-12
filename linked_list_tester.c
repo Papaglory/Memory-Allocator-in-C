@@ -13,6 +13,9 @@ int main() {
     int data_1 = 42;
     create_node(&data_1, sizeof(data_1));
 
+    int data_2 = 11;
+    create_node(&data_2, sizeof(data_2));
+
     // Create a corresponding iterator
     LinkedListIterator* iterator = create_iterator(list);
 

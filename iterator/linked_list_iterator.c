@@ -27,7 +27,7 @@ LinkedListIterator* create_iterator(LinkedList* list) {
 
 }
 
-Node* iterate(LinkedListIterator* iter) {
+Node* next(LinkedListIterator* iter) {
 
     // Check if there is an iterator and a Node
     if (iter == NULL || iter->current == NULL) {
@@ -42,5 +42,26 @@ Node* iterate(LinkedListIterator* iter) {
     iter->current = current->next;
 
     return current;
+
+}
+
+bool has_next(LinkedListIterator* iterator) {
+
+    // Handle if iterator exists
+    if (iterator == NULL) {
+
+        return false;
+
+    }
+
+    // Check if there is a next Node
+    Node* current = iterator->current;
+    if (current == NULL || current->next == NULL) {
+
+        return false;
+
+    }
+
+    return true;
 
 }
