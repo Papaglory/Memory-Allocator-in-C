@@ -4,8 +4,8 @@
 
 LinkedListIterator* create_iterator(LinkedList* list) {
 
-    // Check if list exists or is empty
-    if (list == NULL || list->size == 0) {
+    // Check if list exists
+    if (list == NULL) {
 
         return NULL;
 

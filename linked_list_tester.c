@@ -4,20 +4,19 @@
 #include "linked_list/node.h"
 #include "iterator/linked_list_iterator.h"
 
-
-
-
 int main() {
 
-    // Allocate linked list
-   LinkedList* list = (LinkedList*) malloc(sizeof(LinkedList));
+    // Create an empty list
+    LinkedList* list = create_list();
 
+    // Create the nodes for the list
+    Node* n1 = NULL;
 
+    // Create a corresponding iterator
+    LinkedListIterator* iterator = create_iterator(list);
 
-
-    // Allocate iterator
-    LinkedListIterator* iterator = (LinkedListIterator*) malloc(sizeof(LinkedListIterator));
-
-
+    // Free from memory
+    free(iterator);
+    free(list);
 
 }

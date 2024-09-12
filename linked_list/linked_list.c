@@ -30,6 +30,7 @@ LinkedList* add(LinkedList* list, Node* node) {
 
     }
 
+    // Logic for inserting into an empty list
     if (list->head == NULL) {
 
         list->head = node;
@@ -40,7 +41,7 @@ LinkedList* add(LinkedList* list, Node* node) {
         list->size++;
         node->id = list->size;
 
-    } else {
+    } else { // Logic for inserting into a non-empty list
 
         Node* tail_node = list->tail;
 

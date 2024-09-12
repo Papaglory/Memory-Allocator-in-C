@@ -20,6 +20,11 @@ typedef struct {
 
 } LinkedList;
 
+/*
+* @brief Create an empty list.
+*
+* @return Return pointer pointing to the list.
+*/
 LinkedList* create_list();
 
 /*
