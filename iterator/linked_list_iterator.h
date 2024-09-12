@@ -1,8 +1,8 @@
 #ifndef LINKEDLISTITERATOR_H
 #define LINKEDLISTITERATOR_H
 
-#include "linked_list.h"
-#include "node.h"
+#include "../linked_list/linked_list.h"
+#include "../linked_list/node.h"
 
 typedef struct {
 

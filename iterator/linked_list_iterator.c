@@ -21,10 +21,10 @@ LinkedListIterator* create_iterator(LinkedList* list) {
 
 }
 
-
 Node* iterate(LinkedListIterator* iter) {
 
-    if (iter == NULL) {
+    // Check if there is an iterator and a Node
+    if (iter == NULL || iter->current == NULL) {
 
         return NULL;
 
@@ -32,15 +32,8 @@ Node* iterate(LinkedListIterator* iter) {
 
     Node* current = iter->current;
 
-    // Check if reached the end of list
-    if (current->next == NULL) {
-
-        return NULL;
-
-    }
-
-    // Retrieve the next Node
-    current = current->next;
+    // Update the Node in the iterator to point to next
+    iter->current = current->next;
 
     return current;
 

@@ -1,23 +1,23 @@
-#include <terminator_alloc.h>
 #include <stddef.h>
+#include <stdlib.h>
+#include "terminator_alloc.h"
 
-static TerminatorAlloc* term_alloc;
-
-TerminatorAlloc* create_terminator(size_t size, void* heap_ptr) {
+TerminatorAlloc* create_terminator(size_t size) {
 
     // Allocate memory for the instance
-    term = (TerminatorAlloc*) malloc(sizeof(TerminatorAlloc));
+    TerminatorAlloc* term = (TerminatorAlloc*) malloc(sizeof(TerminatorAlloc));
 
     // Make member variable point to allocated sub heap
     term->sub_heap = (unsigned char*) malloc(size);
 
+    // TODO implement
 }
 
-void terminate_terminator(TerminatorAlloc* term) {
+void destroy_terminator(TerminatorAlloc* term) {
 
     // Free the memory corresponding to sub heap
     void* sub_heap = term->sub_heap;
-    free(sub_heap)
+    free(sub_heap);
 
     // Free TerminatorAlloc object
     free(term);

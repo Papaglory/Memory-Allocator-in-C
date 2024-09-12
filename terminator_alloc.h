@@ -1,7 +1,7 @@
 #include<stddef.h>
 
-#ifndef TERMINATOR_ALLOC.H
-#define TERMINATOR_ALLOC.H
+#ifndef TERMINATOR_ALLOC_H
+#define TERMINATOR_ALLOC_H
 
 typedef struct {
     unsigned char* sub_heap;
@@ -9,7 +9,7 @@ typedef struct {
     // Need some kind of register to keep track of size
     // corresponding to pointer handed out.
     // Perhaps create a hasmap?? linkedlist??
-} TerminatorAlloc
+} TerminatorAlloc;
 
 /*
 * @brief Given the size of the desired sub heap, an allocator
@@ -21,12 +21,12 @@ typedef struct {
 TerminatorAlloc* create_terminator(size_t size);
 
 /*
-* $brief Terminate the given term object and free
+* $brief Destory the given term object and free
 * it from the heap.
 *
-* @param Pointer to the object to be terminated.
+* @param Pointer to the object to be destroyed.
 */
-void terminate_terminator(TerminatorAlloc* term);
+void destroy_terminator(TerminatorAlloc* term);
 
 void* term_malloc(size_t size);
 
