@@ -32,6 +32,11 @@ void* term_malloc(size_t size);
 
 void* term_realloc(size_t size);
 
+/*
+* @brief Free up the memory corresponding to the pointer.
+*
+* @param Pointer to the object to be freed.
+*/
 void* term_free(void* ptr);
 
 #endif
