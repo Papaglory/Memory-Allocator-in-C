@@ -10,7 +10,9 @@ int main() {
     LinkedList* list = create_list();
 
     // Create the nodes for the list
-    Node* n1 = NULL;
+    int data_1 = 42;
+    void* data_1_ptr = malloc(sizeof(data_1));
+    Node* n1 = create_node(data_1_ptr, sizeof(data_1));
 
     // Create a corresponding iterator
     LinkedListIterator* iterator = create_iterator(list);
