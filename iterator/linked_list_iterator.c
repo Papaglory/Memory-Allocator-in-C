@@ -13,6 +13,12 @@ LinkedListIterator* create_iterator(LinkedList* list) {
 
     // Allocate iterator on the heap
     LinkedListIterator* iter = (LinkedListIterator*) malloc(sizeof(LinkedListIterator));
+    if (iter == NULL) {
+
+        // Allocation failed
+        return NULL;
+
+    }
 
     // Set start of iteration to head Node
     iter->current = list->head;
