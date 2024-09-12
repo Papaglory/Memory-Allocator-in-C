@@ -11,6 +11,7 @@ TerminatorAlloc* create_terminator(size_t size) {
     term->sub_heap = (unsigned char*) malloc(size);
 
     // TODO implement
+    return NULL;
 }
 
 void destroy_terminator(TerminatorAlloc* term) {
