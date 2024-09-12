@@ -12,7 +12,7 @@ typedef struct Node {
     // reference to the next node
     Node* next;
 
-    // ID of the node
+    // ID of the node. Starts at 1
     size_t id;
 
 } Node;

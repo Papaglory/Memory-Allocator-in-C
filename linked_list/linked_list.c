@@ -2,7 +2,7 @@
 #include <stdlib.h>
 #include "linked_list.h"
 #include "node.h"
-#include "linked_list_iterator.h"
+#include "../iterator/linked_list_iterator.h"
 
 LinkedList* create_list() {
 
