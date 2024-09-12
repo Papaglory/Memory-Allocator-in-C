@@ -11,8 +11,7 @@ int main() {
 
     // Create the nodes for the list
     int data_1 = 42;
-    void* data_1_ptr = malloc(sizeof(data_1));
-    Node* n1 = create_node(data_1_ptr, sizeof(data_1));
+    create_node(&data_1, sizeof(data_1));
 
     // Create a corresponding iterator
     LinkedListIterator* iterator = create_iterator(list);
