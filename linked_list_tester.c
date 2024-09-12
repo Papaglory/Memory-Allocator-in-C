@@ -1,8 +1,8 @@
 #include <stddef.h>
 #include <stdlib.h>
-#include "linked_list.h"
-#include "node.h"
-#include "../iterator/linked_list_iterator.h"
+#include "linked_list/linked_list.h"
+#include "linked_list/node.h"
+#include "iterator/linked_list_iterator.h"
 
 
 
