@@ -1,6 +1,7 @@
 #ifndef LINKEDLISTITERATOR_H
 #define LINKEDLISTITERATOR_H
 
+#include <stdbool.h>
 #include "../linked_list/linked_list.h"
 #include "../linked_list/node.h"
 
@@ -25,6 +26,14 @@ LinkedListIterator* create_iterator(LinkedList* list);
 * @param The iterator to iterate.
 * @return The Node the iterator is currently pointing to.
 */
-Node* iterate(LinkedListIterator* iterator);
+Node* next(LinkedListIterator* iterator);
+
+/*
+* @brief Determines if there is a next node in the iteration.
+*
+* @param The iterator to iterate.
+* @return A boolean indicating if there is a next item.
+*/
+bool has_next(LinkedListIterator* iterator);
 
 #endif // LINKEDLISTITERATOR_H

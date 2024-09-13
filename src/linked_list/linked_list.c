@@ -7,13 +7,14 @@
 LinkedList* create_list() {
 
     LinkedList* list = (LinkedList*) malloc(sizeof(LinkedList));
-
     if (list == NULL) {
 
+        // Allocation failed
         return NULL;
 
     }
 
+    // Initialize member variables
     list->head = NULL;
     list->tail = NULL;
     list->size = 0;

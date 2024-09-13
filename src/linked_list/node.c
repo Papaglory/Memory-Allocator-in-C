@@ -19,6 +19,7 @@ Node* create_node(void* data, size_t data_size) {
 
         // Memory allocation failed
         free(node); // Free in case of failure
+
         return NULL;
 
     }
