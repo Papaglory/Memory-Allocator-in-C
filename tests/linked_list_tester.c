@@ -1,3 +1,4 @@
+#include <stdio.h>
 #include <stddef.h>
 #include <stdlib.h>
 #include "linked_list/linked_list.h"
@@ -18,6 +19,27 @@ int main() {
 
     // Create a corresponding iterator
     LinkedListIterator* iterator = create_iterator(list);
+
+    Node* node = NULL;
+    while(has_next(iterator)) {
+
+        // Retrieve the next Node
+        node = next(iterator);
+
+        // Payload of the Node
+        void* data = node->data;
+        size_t data_size = node->data_size;
+
+        // Process the data if it is an integer
+        if (node->data_size == sizeof(int)) {
+
+            // Cast void pointer to integer pointer
+            int* int_data = (int*) data;
+            printf("%d", *int_data);
+
+        }
+
+    }
 
     // Free from memory
     free(iterator);
