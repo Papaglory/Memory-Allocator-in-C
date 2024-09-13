@@ -1,6 +1,6 @@
 #include <stddef.h>
 #include <stdlib.h>
-#include "terminator_alloc.h"
+#include "custom_allocator.h"
 
 TerminatorAlloc* create_terminator(size_t size) {
 
@@ -27,7 +27,7 @@ TerminatorAlloc* create_terminator(size_t size) {
     return NULL;
 }
 
-void destroy_terminator(TerminatorAlloc* term) {
+void destroy_allocator(TerminatorAlloc* term) {
 
     // Free the memory corresponding to sub heap
     void* sub_heap = term->sub_heap;

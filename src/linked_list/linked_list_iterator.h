@@ -2,8 +2,8 @@
 #define LINKEDLISTITERATOR_H
 
 #include <stdbool.h>
-#include "../linked_list/linked_list.h"
-#include "../linked_list/node.h"
+#include "linked_list.h"
+#include "node.h"
 
 typedef struct {
 

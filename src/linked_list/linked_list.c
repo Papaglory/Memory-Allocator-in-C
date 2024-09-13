@@ -2,7 +2,7 @@
 #include <stdlib.h>
 #include "linked_list.h"
 #include "node.h"
-#include "../iterator/linked_list_iterator.h"
+#include "linked_list_iterator.h"
 
 LinkedList* create_list() {
 
@@ -75,7 +75,7 @@ LinkedList* delete_node(LinkedList* list, size_t id) {
     LinkedListIterator* iterator = create_iterator(list);
 
     Node* prev = iterator->current;
-    Node* current = iterate(iterator);
+    Node* current = next(iterator);
 
     // Check if head corresponds with 'id'
     if (prev->id == id) {
@@ -125,7 +125,7 @@ LinkedList* delete_node(LinkedList* list, size_t id) {
 
         // Iterate to the next Node
         prev = current;
-        current = iterate(iterator);
+        current = next(iterator);
 
     }
 

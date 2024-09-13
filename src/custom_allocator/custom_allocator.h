@@ -26,7 +26,7 @@ TerminatorAlloc* create_terminator(size_t size);
 *
 * @param Pointer to the object to be destroyed.
 */
-void destroy_terminator(TerminatorAlloc* term);
+void destroy_allocator(TerminatorAlloc* term);
 
 void* term_malloc(size_t size);
 
