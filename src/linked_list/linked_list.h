@@ -65,4 +65,11 @@ Node* get_head(LinkedList* list);
 */
 Node* get_tail(LinkedList* list);
 
+/*
+* @brief Destroy the list.
+*
+* @param The linked list.
+*/
+void destroy_list(LinkedList* list);
+
 #endif // LINKED_LIST_H

@@ -134,3 +134,40 @@ LinkedList* delete_node(LinkedList* list, size_t id) {
     return list;
 
 }
+
+Node* get_head(LinkedList* list) {
+
+    return list->head;
+
+}
+
+Node* get_tail(LinkedList* list) {
+
+    return list->head;
+
+}
+
+void destroy_list(LinkedList* list) {
+
+    if (list == NULL) {
+
+        return;
+
+    }
+
+    // Loop through the list and free each Node
+    LinkedListIterator* iterator = create_iterator(list);
+    while (has_next(iterator)) {
+
+        // Free the Node
+        Node* node = next(iterator);
+        destroy_node(node);
+
+    }
+
+    free(iterator);
+
+    // With all the node set free, it is safe to free list struct
+    free(list);
+
+}

@@ -29,4 +29,12 @@ typedef struct Node {
 */
 Node* create_node(void* data, size_t data_size);
 
+/*
+* @brief Destroy and free the memory corresponding to this
+* Node.
+*
+* @param The Node to be destroyed.
+*/
+void destroy_node(Node* node);
+
 #endif // NODE_H
