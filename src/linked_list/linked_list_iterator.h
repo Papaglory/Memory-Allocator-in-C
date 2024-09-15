@@ -20,8 +20,8 @@ typedef struct {
 LinkedListIterator* create_iterator(LinkedList* list);
 
 /*
-* @brief This function will make an iterator in the
-* given iterator incrementing by one step.
+* @brief Retrieve the next Node in the list according
+* to the iterator.
 *
 * @param The iterator to iterate.
 * @return The Node the iterator is currently pointing to.
@@ -29,7 +29,7 @@ LinkedListIterator* create_iterator(LinkedList* list);
 Node* next(LinkedListIterator* iterator);
 
 /*
-* @brief Determines if there is a next node in the iteration.
+* @brief Determines if there is a next Node in the iteration.
 *
 * @param The iterator to iterate.
 * @return A boolean indicating if there is a next item.

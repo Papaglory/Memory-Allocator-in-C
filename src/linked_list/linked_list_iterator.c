@@ -38,7 +38,7 @@ Node* next(LinkedListIterator* iter) {
 
     Node* current = iter->current;
 
-    // Update the Node in the iterator to point to next
+    // Update the iterator to point to next Node
     iter->current = current->next;
 
     return current;
@@ -54,9 +54,9 @@ bool has_next(LinkedListIterator* iterator) {
 
     }
 
-    // Check if there is a next Node
+    // Check if there is a Node to retrieve given a 'next' call
     Node* current = iterator->current;
-    if (current == NULL || current->next == NULL) {
+    if (current == NULL) {
 
         return false;
 
