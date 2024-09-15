@@ -4,7 +4,7 @@ CFLAGS = -Wall -O2
 
 # Directories
 SRC_DIR = src
-OBJ_DIR = obj
+OBJ_DIR = build
 
 # Find all source files
 SRC_FILES = $(shell find $(SRC_DIR) -name '*.c')

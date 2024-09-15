@@ -7,7 +7,7 @@
 
 int main() {
 
-    printf("%s", "----TEST STARTED----");
+    printf("%s", "----TEST STARTED----\n");
 
     // Create an empty list
     LinkedList* list = create_list();
@@ -24,6 +24,15 @@ int main() {
     // Create a corresponding iterator
     LinkedListIterator* iterator = create_iterator(list);
 
+    // Some tests for the linked list
+    Node* head = get_head(list);
+    Node* tail = get_tail(list);
+
+    printf("Head ID: %zu\n", head->id);
+    printf("tail ID: %zu\n", tail->id);
+    printf("Linked list size: %zu\n", list->size);
+
+    // Testing each of the nodes in the list along with the iterator
     Node* node = NULL;
     while(has_next(iterator)) {
 
@@ -39,7 +48,8 @@ int main() {
 
             // Cast void pointer to integer pointer
             int* int_data = (int*) data;
-            printf("%d", *int_data);
+            printf("Value: %d\n", *int_data);
+            printf("ID: %zu\n", node->id);
 
         }
 
@@ -49,6 +59,6 @@ int main() {
     free(iterator);
     destroy_list(list);
 
-    printf("%s", "----TEST ENDED----");
+    printf("%s", "----TEST ENDED----\n");
 
 }
