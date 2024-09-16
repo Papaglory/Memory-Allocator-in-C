@@ -1,12 +1,12 @@
 #include <stddef.h>
 #include <stdlib.h>
-#include "custom_allocator.h"
+#include "allocator.h"
 
-TerminatorAlloc* create_terminator(size_t size) {
+Allocator* create_allocator(size_t size) {
 
     // Allocate memory for the instance
-    TerminatorAlloc* term = (TerminatorAlloc*) malloc(sizeof(TerminatorAlloc));
-    if (term == NULL) {
+    Allocator* alloc = (Allocator*) malloc(sizeof(Allocator));
+    if (alloc == NULL) {
 
         // Allocation failed
         return NULL;
@@ -14,11 +14,11 @@ TerminatorAlloc* create_terminator(size_t size) {
     }
 
     // Make member variable point to allocated sub heap
-    term->sub_heap = (unsigned char*) malloc(size);
-    if (term->sub_heap == NULL) {
+    alloc->sub_heap = (unsigned char*) malloc(size);
+    if (alloc->sub_heap == NULL) {
 
         // Allocation failed
-        free(term);
+        free(alloc);
         return NULL;
 
     }
@@ -27,7 +27,7 @@ TerminatorAlloc* create_terminator(size_t size) {
     return NULL;
 }
 
-void destroy_allocator(TerminatorAlloc* term) {
+void destroy_allocator(Allocator* term) {
 
     // Free the memory corresponding to sub heap
     void* sub_heap = term->sub_heap;
