@@ -1,8 +1,11 @@
+#include <stdio.h>
 #include <stddef.h>
+#include <string.h>
 #include <stdlib.h>
 #include "linked_list.h"
 #include "node.h"
 #include "linked_list_iterator.h"
+#include "../other_modules/constants.h"
 
 LinkedList* create_list() {
 
@@ -72,10 +75,18 @@ LinkedList* delete_node(LinkedList* list, size_t id) {
     }
 
     // Create an iterator for the list
-    LinkedListIterator* iterator = create_iterator(list);
+    LinkedListIterator* iter = create_iterator(list);
 
-    Node* prev = iterator->current;
-    Node* current = next(iterator);
+    // Retrieve Nodes for base case
+    Node* prev = next(iter);
+    if (prev == NULL) {
+
+        destroy_iterator(iter);
+
+        return NULL;
+
+    }
+    Node* current = next(iter);
 
     // Check if head corresponds with 'id'
     if (prev->id == id) {
@@ -92,8 +103,8 @@ LinkedList* delete_node(LinkedList* list, size_t id) {
         }
 
         // Free the Node from memory
-        free(prev);
-        free(iterator);
+        destroy_node(prev);
+        destroy_iterator(iter);
 
         return list;
 
@@ -116,7 +127,7 @@ LinkedList* delete_node(LinkedList* list, size_t id) {
             }
 
             // Free the Node from memory
-            free(current);
+            destroy_node(current);
             list->size--;
 
             break;
@@ -125,13 +136,49 @@ LinkedList* delete_node(LinkedList* list, size_t id) {
 
         // Iterate to the next Node
         prev = current;
-        current = next(iterator);
+        current = next(iter);
 
     }
 
-    free(iterator);
+    destroy_iterator(iter);
 
     return list;
+
+}
+
+size_t search_by_value(LinkedList* list, void* data, size_t data_size) {
+
+    if (data == NULL || data_size == 0) {
+
+        return NOT_FOUND;
+
+    }
+
+    // Go through each Node and check if it matches
+    LinkedListIterator* iter = create_iterator(list);
+    while(has_next(iter)) {
+
+        Node* node = next(iter);
+        if (node == NULL) {
+
+            free(iter);
+            return NOT_FOUND;
+
+        }
+
+        // Compare the argument data to that of the Node
+        if (data_size == node->data_size && memcmp(data, node->data, data_size) == 0) {
+
+            free(iter);
+            return node->id;
+
+        }
+
+    }
+
+    destroy_iterator(iter);
+
+    return NOT_FOUND;
 
 }
 
@@ -143,7 +190,7 @@ Node* get_head(LinkedList* list) {
 
 Node* get_tail(LinkedList* list) {
 
-    return list->head;
+    return list->tail;
 
 }
 
@@ -156,16 +203,16 @@ void destroy_list(LinkedList* list) {
     }
 
     // Loop through the list and free each Node
-    LinkedListIterator* iterator = create_iterator(list);
-    while (has_next(iterator)) {
+    LinkedListIterator* iter = create_iterator(list);
+    while (has_next(iter)) {
 
         // Free the Node
-        Node* node = next(iterator);
+        Node* node = next(iter);
         destroy_node(node);
 
     }
 
-    free(iterator);
+    destroy_iterator(iter);
 
     // With all the node set free, it is safe to free list struct
     free(list);

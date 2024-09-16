@@ -32,6 +32,8 @@ Node* create_node(void* data, size_t data_size);
 /*
 * @brief Destroy and free the memory corresponding to this
 * Node.
+* Careful to use this if the Node is part of a LinkedList.
+* Consider using delete_node().
 *
 * @param The Node to be destroyed.
 */

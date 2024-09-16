@@ -47,12 +47,21 @@ LinkedList* add(LinkedList* list, Node* node);
 */
 LinkedList* delete_node(LinkedList* list, size_t id);
 
-size_t search_by_value(void* data, size_t data_size);
+/*
+* @brief Search by value in the linked list. The function
+* looks through the nodes and find the first Node
+* where the value is equal.
+*
+* @param1 The value to compare each Node with.
+* @param2 The size of the data we are looking for.
+* @return The ID corresponding to the node.
+*/
+size_t search_by_value(LinkedList* list, void* data, size_t data_size);
 
 /*
 * @brief Retrieve the first Node of the list.
 *
-* @param1 The linked list.
+* @param The linked list.
 * @return The first node in the list.
 */
 Node* get_head(LinkedList* list);

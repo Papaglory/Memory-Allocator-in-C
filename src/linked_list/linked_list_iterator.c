@@ -21,7 +21,7 @@ LinkedListIterator* create_iterator(LinkedList* list) {
     }
 
     // Set start of iteration to head Node
-    iter->current = list->head;
+    iter->current = get_head(list);
 
     return iter;
 
@@ -45,17 +45,17 @@ Node* next(LinkedListIterator* iter) {
 
 }
 
-bool has_next(LinkedListIterator* iterator) {
+bool has_next(LinkedListIterator* iter) {
 
     // Handle if iterator exists
-    if (iterator == NULL) {
+    if (iter == NULL) {
 
         return false;
 
     }
 
     // Check if there is a Node to retrieve given a 'next' call
-    Node* current = iterator->current;
+    Node* current = iter->current;
     if (current == NULL) {
 
         return false;
@@ -63,5 +63,17 @@ bool has_next(LinkedListIterator* iterator) {
     }
 
     return true;
+
+}
+
+void destroy_iterator(LinkedListIterator* iter) {
+
+    if (iter == NULL) {
+
+        return;
+
+    }
+
+    free(iter);
 
 }

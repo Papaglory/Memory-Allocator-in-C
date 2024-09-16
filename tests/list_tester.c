@@ -21,42 +21,28 @@ int main() {
     Node* node_2 = create_node(&data_2, sizeof(data_2));
     add(list, node_2);
 
+    int data_3 = 99;
+    Node* node_3 = create_node(&data_3, sizeof(data_3));
+    add(list, node_3);
+
     // Create a corresponding iterator
-    LinkedListIterator* iterator = create_iterator(list);
+    LinkedListIterator* iter = create_iterator(list);
 
-    // Some tests for the linked list
-    Node* head = get_head(list);
-    Node* tail = get_tail(list);
+    printf("\n%s\n", "Searching for node_2 by value");
+    int found_id = search_by_value(list, &data_2, sizeof(data_2));
 
-    printf("Head ID: %zu\n", head->id);
-    printf("tail ID: %zu\n", tail->id);
-    printf("Linked list size: %zu\n", list->size);
+    printf("Node ID found: %d", found_id);
 
-    // Testing each of the nodes in the list along with the iterator
-    Node* node = NULL;
-    while(has_next(iterator)) {
+    printf("\n%s\n", "Trying to remove a node from the list");
 
-        // Retrieve the next Node
-        node = next(iterator);
+    // Delete the first Node in the list
+    delete_node(list, 1);
+    node_1 = NULL;
 
-        // Payload of the Node
-        void* data = node->data;
-        size_t data_size = node->data_size;
-
-        // Process the data if it is an integer
-        if (data_size == sizeof(int)) {
-
-            // Cast void pointer to integer pointer
-            int* int_data = (int*) data;
-            printf("Value: %d\n", *int_data);
-            printf("ID: %zu\n", node->id);
-
-        }
-
-    }
+    printf("%s\n", "Node removed");
 
     // Free from memory
-    free(iterator);
+    destroy_iterator(iter);
     destroy_list(list);
 
     printf("%s", "----TEST ENDED----\n");
