@@ -29,9 +29,6 @@ int main() {
     Node* node_4 = create_node(&data_4, sizeof(data_4));
     add(list, node_4);
 
-    // Create a corresponding iterator
-    LinkedListIterator* iter = create_iterator(list);
-
     printf("\n%s\n", "Searching for node_2 by value");
     int found_id = search_by_value(list, &data_2, sizeof(data_2));
 
@@ -45,8 +42,10 @@ int main() {
 
     printf("%s\n", "Node removed");
 
-
     printf("%s\n", "Printing the content of the Nodes");
+
+    // Create a corresponding iterator
+    LinkedListIterator* iter = create_iterator(list);
 
     while(has_next(iter)) {
 
