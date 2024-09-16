@@ -12,4 +12,6 @@ and one using C's allocator:
 - Node
 
 There are kept two versions to keep as a reference implementation and for
-potensial debugging.
+potensial debugging. This is done my duplicating the code base.
+There will be one standard version and one custom\_allocator version.
+There are corresponding directories in src and build.

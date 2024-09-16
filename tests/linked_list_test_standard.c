@@ -1,9 +1,9 @@
 #include <stdio.h>
 #include <stddef.h>
 #include <stdlib.h>
-#include "../src/linked_list/linked_list.h"
-#include "../src/linked_list/node.h"
-#include "../src/linked_list/linked_list_iterator.h"
+#include "../src/standard/linked_list/linked_list.h"
+#include "../src/standard/linked_list/node.h"
+#include "../src/standard/linked_list/linked_list_iterator.h"
 
 int main() {
 
