@@ -57,6 +57,7 @@ void* allocator_malloc(Allocator* alloc, size_t size);
 */
 void* allocator_free(Allocator* alloc, void* ptr);
 
+// TODO Add comments
 void* allocator_realloc(Allocator* alloc, size_t size);
 
 /*
@@ -66,5 +67,23 @@ void* allocator_realloc(Allocator* alloc, size_t size);
 * @param Pointer to the object to be destroyed.
 */
 void destroy_allocator(Allocator* alloc);
+
+/*
+* @brief Set a new Allocator object to the allocator functions.
+* It is not necessary to call 'release_allocator' before setting
+* a new allocator. This sets the 'current_allocator' pointer to
+* point to the new Allocator object.
+*
+* @param The Allocator to be set.
+*/
+void set_allocator(Allocator* alloc);
+
+/*
+* @brief Release the current Allocator from the allocator functions,
+* effectively setting the 'current_allocator' pointer to NULL.
+*
+* @param The Allocator to be released.
+*/
+void release_allocator(Allocator* alloc);
 
 #endif

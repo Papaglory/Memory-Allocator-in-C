@@ -2,11 +2,16 @@
 #include <stdlib.h>
 #include "allocator.h"
 
+/*
+* Variable points to the allocator currently connected
+* to the allocator functions.
+*/
+static Allocator* current_alloc = NULL;
+
 Allocator* create_allocator(size_t size) {
 
     // Use the built-in C malloc to get the sub-heap
     void* sub_heap = malloc(size);
-
 
     // Reserve the start or the end for the allocator metadata?
     // Make the reservation dynamic?
@@ -18,9 +23,6 @@ Allocator* create_allocator(size_t size) {
     //
     // TODO Calculate the total needed to initialize Allocator to
     // create a lower bound for input size
-    //
-
-
 
     int allocator_size = sizeof(Allocator);
 
