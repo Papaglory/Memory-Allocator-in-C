@@ -36,3 +36,24 @@ Node* create_node(void* data, size_t data_size) {
     return node;
 
 }
+
+void destroy_node(Node* node) {
+
+    if (node == NULL) {
+
+        return;
+
+    }
+
+    // Free memory corresponding to the data the node carries
+    if (node->data != NULL) {
+
+        free(node->data);
+        node->data = NULL;
+
+    }
+
+    // Free the node itself
+    free(node);
+
+}
