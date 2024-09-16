@@ -25,6 +25,10 @@ int main() {
     Node* node_3 = create_node(&data_3, sizeof(data_3));
     add(list, node_3);
 
+    int data_4 = 101;
+    Node* node_4 = create_node(&data_4, sizeof(data_4));
+    add(list, node_4);
+
     // Create a corresponding iterator
     LinkedListIterator* iter = create_iterator(list);
 
@@ -36,10 +40,29 @@ int main() {
     printf("\n%s\n", "Trying to remove a node from the list");
 
     // Delete the first Node in the list
-    delete_node(list, 1);
-    node_1 = NULL;
+    delete_node(list, 3);
+    node_4 = NULL;
 
     printf("%s\n", "Node removed");
+
+
+    printf("%s\n", "Printing the content of the Nodes");
+
+    while(has_next(iter)) {
+
+        Node* node = next(iter);
+
+        printf("Node ID: %zu\n", node->id);
+
+        if (node->data_size == sizeof(int)) {
+
+            int* value = (int*) node->data;
+
+            printf("Node value: %d\n", *value);
+
+        }
+
+    }
 
     // Free from memory
     destroy_iterator(iter);

@@ -18,6 +18,14 @@ typedef struct {
     // Size of the list
     size_t size;
 
+    /*
+    * Each Node in the list will have a unique ID.
+    * IDs are not recycled, meaning that the ID of
+    * a node that has been removed will not be given
+    * to a new Node added to the list.
+    */
+    size_t next_id;
+
 } LinkedList;
 
 /*

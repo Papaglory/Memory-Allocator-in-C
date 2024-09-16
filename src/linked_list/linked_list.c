@@ -21,6 +21,7 @@ LinkedList* create_list() {
     list->head = NULL;
     list->tail = NULL;
     list->size = 0;
+    list->next_id = 0;
 
     return list;
 }
@@ -43,7 +44,7 @@ LinkedList* add(LinkedList* list, Node* node) {
         node->next = NULL;
 
         list->size++;
-        node->id = list->size;
+        node->id = list->next_id++;
 
     } else { // Logic for inserting into a non-empty list
 
@@ -57,7 +58,7 @@ LinkedList* add(LinkedList* list, Node* node) {
         node->next = NULL;
 
         list->size++;
-        node->id = list->size;
+        node->id = list->next_id++;
 
     }
 
