@@ -27,7 +27,7 @@ typedef struct {
     * There will also be a boolean variable to tell
     * whether the memory block is free or used.
     */
-    LinkedList list;
+    LinkedList* list;
 
 } Allocator;
 
