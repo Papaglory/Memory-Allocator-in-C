@@ -48,17 +48,17 @@ Allocator* create_allocator(size_t size);
 * @param Determines the size of memory to allocate.
 * @return Returns a pointer to the allocated memory.
 */
-void* allocator_malloc(Allocator* alloc, size_t size);
+void* allocator_malloc(size_t size);
 
 /*
 * @brief Free up the memory corresponding to the pointer.
 *
 * @param Pointer to the object to be freed.
 */
-void* allocator_free(Allocator* alloc, void* ptr);
+void* allocator_free(void* ptr);
 
 // TODO Add comments
-void* allocator_realloc(Allocator* alloc, size_t size);
+void* allocator_realloc(size_t size);
 
 /*
 * $brief Destory the given term object and free

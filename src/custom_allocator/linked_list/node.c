@@ -1,11 +1,12 @@
 #include <string.h>
 #include <stdlib.h>
 #include "node.h"
+#include "../allocator/allocator.h"
 
 Node* create_node(void* data, size_t data_size) {
 
     // Allocate space for the Node
-    Node* node = (Node*) malloc(sizeof(Node));
+    Node* node = (Node*) allocator_malloc(sizeof(Node));
     if (node == NULL) {
 
         // Memory allocation failed
@@ -14,11 +15,11 @@ Node* create_node(void* data, size_t data_size) {
     }
 
     // Allocate memory corresponding to this pointer
-    node->data = malloc(data_size);
+    node->data = allocator_malloc(data_size);
     if (node->data == NULL){
 
         // Memory allocation failed
-        free(node); // Free in case of failure
+        allocator_free(node); // Free in case of failure
 
         return NULL;
 
@@ -48,12 +49,12 @@ void destroy_node(Node* node) {
     // Free memory corresponding to the data the node carries
     if (node->data != NULL) {
 
-        free(node->data);
+        allocator_free(node->data);
         node->data = NULL;
 
     }
 
     // Free the node itself
-    free(node);
+    allocator_free(node);
 
 }

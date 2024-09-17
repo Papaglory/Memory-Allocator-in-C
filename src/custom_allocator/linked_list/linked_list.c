@@ -10,7 +10,7 @@
 
 LinkedList* create_list() {
 
-    LinkedList* list = (LinkedList*) malloc(sizeof(LinkedList));
+    LinkedList* list = (LinkedList*) allocator_malloc(sizeof(LinkedList));
     if (list == NULL) {
 
         // Allocation failed
@@ -163,7 +163,7 @@ size_t search_by_value(LinkedList* list, void* data, size_t data_size) {
         Node* node = next(iter);
         if (node == NULL) {
 
-            free(iter);
+            destroy_iterator(iter);
             return NOT_FOUND;
 
         }
@@ -171,7 +171,7 @@ size_t search_by_value(LinkedList* list, void* data, size_t data_size) {
         // Compare the argument data to that of the Node
         if (data_size == node->data_size && memcmp(data, node->data, data_size) == 0) {
 
-            free(iter);
+            destroy_iterator(iter);
             return node->id;
 
         }
@@ -217,6 +217,6 @@ void destroy_list(LinkedList* list) {
     destroy_iterator(iter);
 
     // With all the node set free, it is safe to free list struct
-    free(list);
+    allocator_free(list);
 
 }
