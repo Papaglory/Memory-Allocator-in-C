@@ -6,6 +6,7 @@
 #include "node.h"
 #include "linked_list_iterator.h"
 #include "../other_modules/constants.h"
+#include "../allocator/allocator.h"
 
 LinkedList* create_list() {
 
