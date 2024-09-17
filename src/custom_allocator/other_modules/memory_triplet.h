@@ -13,7 +13,7 @@ typedef struct {
     size_t block_size;
 
     // Whether the memory block is free or used
-    bool free;
+    bool is_free;
 
 } MemoryTriplet;
 
@@ -25,7 +25,7 @@ typedef struct {
 * @param3 Whether the memory block is free or used.
 * @return A MemoryTriplet object.
 */
-MemoryTriplet* create_memory_triplet(void* memory_start, size_t block_size, bool free);
+MemoryTriplet* create_memory_triplet(void* memory_start, size_t block_size, bool is_free);
 
 /*
 * @brief Destroy a MemoryTriplet object and free it from the sub-heap.
