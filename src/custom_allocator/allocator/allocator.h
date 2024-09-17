@@ -70,13 +70,23 @@
 
 #include "../linked_list/linked_list.h"
 #include<stddef.h>
+#include <stdbool.h>
 
 typedef struct {
-    // Pointer to the managed heap
-    void* heap;
+    // Pointer to the start of the managed heap
+    void* heap_start;
+
+    // Pointer to the end of the managed heap
+    void* heap_end;
+
+    // Pointer to the start of the reserved pool
+    void* reserved_pool_start;
 
     // Size of the managed heap
     size_t heap_size;
+
+    // Size of the reserved pool
+    size_t reserved_pool_size;
 
     LinkedList* list;
 
@@ -91,6 +101,15 @@ typedef struct {
 * @return Returns a pointer to the created Allocator.
 */
 Allocator* create_allocator(size_t size);
+
+// Creates a memoryTriplet and puts it into A Node??
+// Where do I allocate this?
+// I should allocate it in the reserved portion. Have it
+// located at the current end of reserved pool bound??
+// Yes, perhaps have it always try to create at the bound,
+// then just move the resserved pool bound??
+// ENSURE THAT THE current_alloc is set!!!
+Node* create_metadata_node(void* memory_start, size_t block_size, bool is_free);
 
 /*
 * @brief Given the input 'size', allocate memory on the

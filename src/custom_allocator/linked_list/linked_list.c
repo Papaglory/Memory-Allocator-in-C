@@ -54,7 +54,7 @@ LinkedList* add(LinkedList* list, Node* node) {
         // Overwrite tail node
         list->tail = node;
 
-        // Insert new node
+        // Update next Node references
         tail_node->next = node;
         node->next = NULL;
 

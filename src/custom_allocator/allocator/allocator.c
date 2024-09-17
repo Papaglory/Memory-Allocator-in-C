@@ -2,35 +2,49 @@
 #include <stdlib.h>
 #include "allocator.h"
 #include "../other_modules/memory_triplet.h"
+#include "../linked_list/node.h"
 
-// The Allocator currently connected to the Allocator functions
+/**
+ * The Allocator currently referenced to when
+ * using the Allocator functions.
+ */
 static Allocator* current_alloc = NULL;
 
 Allocator* create_allocator(size_t heap_size) {
 
-    // Use the built-in C malloc to get the managed heap
-    void* sub_heap = malloc(heap_size);
+    // The heap size must be at least this tall to ride
+    size_t initial_reserved_pool_size = sizeof(Allocator) + sizeof(LinkedList) + sizeof(MemoryTriplet) + sizeof(Node);
+    if (heap_size < initial_reserved_pool_size) {
 
+        return NULL;
 
-    // Make a lower bound to input size?
-    //
-    // TODO Maybe have the sub_heap pointer point to the actual start
-    // of useful heap, that is, skip alloc and list??
-    //
-    // TODO Calculate the total needed to initialize Allocator to
-    // create a lower bound for input size
-    //
+    }
 
-    /*
-    * Keeps track of memory used within the heap for
-    * Allocator metadata.
-    */
-    size_t reserved_memory = sizeof(Allocator);
-    Allocator* alloc = (Allocator*) sub_heap;
+    // Utilize the built-in C malloc to acquire the managed heap
+    void* heap_start = malloc(heap_size);
 
-    // Initialize the LinkedList in memory block after allocator
-    LinkedList* list = sub_heap + reserved_memory;
-    reserved_memory += sizeof(LinkedList);
+    if (heap_start == NULL) {
+
+        // Memory error from malloc()
+        return NULL;
+
+    }
+
+    // Pointer to the end of the heap
+    void* heap_end = heap_start + heap_size;
+
+    // Initialize Allocator object at the end of heap
+    Allocator* alloc = (Allocator*) heap_end;
+
+    // Set Allocator member variables
+    alloc->heap_start = heap_start;
+    alloc->heap_end = heap_start + heap_size;
+    alloc->reserved_pool_start = heap_start + heap_size;
+    alloc->heap_size = heap_size;
+    alloc->reserved_pool_size = sizeof(Allocator); // Keeps track of memory used for metadata
+
+    // Initialize LinkedList object
+    LinkedList* list = heap_end - alloc->reserved_pool_size;
 
     // Set LinkedList member variables
     list->head = NULL;
@@ -38,16 +52,48 @@ Allocator* create_allocator(size_t heap_size) {
     list->size = 0;
     list->next_id = 0;
 
-    // Set Allocator member variables
-    alloc->heap = sub_heap;
-    alloc->heap_size = heap_size;
+    // Add memory used by LinkedList to the reserved pool size
+    alloc->reserved_pool_size += sizeof(LinkedList);
+
+    // Set Allocator member variable
     alloc->list = list;
 
-
-    // Create the first Node containing the user memory pool
-    void* memory_start = sub_heap + sizeof(Allocator) + sizeof(LinkedList);
-    size_t block_size = heap_size - sizeof(Allocator) + sizeof(LinkedList);
+    // Initialize a Node referencing the entire user memory pool
+    void* memory_start = heap_start;
+    size_t block_size = heap_size - alloc->reserved_pool_size - sizeof(MemoryTriplet);
     bool is_free = true;
-    create_memory_triplet(memory_start, block_size, is_free);
+    Node* node = create_metadata_node(memory_start, block_size, is_free);
+
+    // Add memory used by Node to the reserved pool size
+    alloc->reserved_pool_size += sizeof(Node);
+
+    // Do I need a function that creates a Node internally with the allocator
+    // Like maybe create block, so I dont operate with create_memory_triplet
+    // and create_node here directly, but for example, create_block??
+    //
+    // The current issue is that the create_memory_triplet and create_node
+    // utilize the allocator_malloc() functions.
+
+    add(list, node);
+
+    return alloc;
+}
+
+
+Node* create_metadata_node(void* memory_start, size_t block_size, bool is_free) {
+
+    MemoryTriplet* triplet = create_memory_triplet(memory_start, block_size, is_free);
+
+
+
+    // Add memory used by MemoryTriplet to the reserved pool size
+    current_alloc->reserved_pool_size += sizeof(MemoryTriplet);
+
+    // Create Node containing the memory_triplet
+    Node* node = create_node((void*) triplet, sizeof(MemoryTriplet));
+
+
+    return NULL;
 
 }
+
