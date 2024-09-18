@@ -116,13 +116,15 @@ Allocator* create_allocator(size_t size);
 */
 void increase_reserved_pool(size_t increase);
 
-// Creates a memoryTriplet and puts it into A Node??
-// Where do I allocate this?
-// I should allocate it in the reserved portion. Have it
-// located at the current end of reserved pool bound??
-// Yes, perhaps have it always try to create at the bound,
-// then just move the resserved pool bound??
-// ENSURE THAT THE current_alloc is set!!!
+/*
+* @brief Create a metadata Node stores data about the start of a
+* memory block, its size, and whether it is free or in use.
+*
+* @param1 A pointer to the start of the memory block.
+* @param2 The size of the memory block.
+* @param3 whether the memory block is free or in use.
+* @return A Node containing the data from the fucntion argument.
+*/
 Node* create_metadata_node(char* memory_start, size_t block_size, bool is_free);
 
 /*
@@ -168,6 +170,6 @@ void set_allocator(Allocator* alloc);
 *
 * @param The Allocator to be released.
 */
-void release_allocator(Allocator* alloc);
+void release_allocator();
 
 #endif

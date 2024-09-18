@@ -99,13 +99,12 @@ void increase_reserved_pool(size_t increase) {
 
     }
 
+    // TODO Maybe have a check to see if the memory that we expand
+    // to is free, else try clean up, and if it fails, heap is full
+
     // Shift the border of the reserved pool downwards
     current_alloc->reserved_pool_border -= increase;
     current_alloc->reserved_pool_size += increase;
-
-
-    // TODO Maybe have a check to see if the memory that we expand
-    // to is free, else try clean up, and if it fails, heap is full
 
 }
 
@@ -143,4 +142,24 @@ Node* create_metadata_node(char* memory_start, size_t block_size, bool is_free) 
     return NULL;
 
 }
+
+void set_allocator(Allocator* alloc) {
+
+
+    if (alloc == NULL) {
+
+        return;
+
+    }
+
+    current_alloc = alloc;
+
+}
+
+void release_allocator() {
+
+    current_alloc = NULL;
+
+}
+
 
