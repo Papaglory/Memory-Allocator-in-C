@@ -7,7 +7,7 @@
 typedef struct {
 
     // Points to the start of a memory block
-    void* memory_start;
+    char* memory_start;
 
     // The size of the memory block
     size_t block_size;

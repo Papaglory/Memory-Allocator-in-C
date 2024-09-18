@@ -113,7 +113,7 @@ LinkedList* delete_node(LinkedList* list, size_t id) {
     }
 
     // Search remaining part of list
-    while(current != NULL) {
+    while (current != NULL) {
 
         // Check if it is the Node to be removed
         if (current->id == id) {
@@ -158,7 +158,7 @@ size_t search_by_value(LinkedList* list, void* data, size_t data_size) {
 
     // Go through each Node and check if it matches
     LinkedListIterator* iter = create_iterator(list);
-    while(has_next(iter)) {
+    while (has_next(iter)) {
 
         Node* node = next(iter);
         if (node == NULL) {

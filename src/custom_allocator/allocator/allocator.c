@@ -18,7 +18,7 @@ Allocator* create_allocator(size_t heap_size) {
         + sizeof(LinkedList)
         + sizeof(MemoryTriplet)
         + sizeof(Node);
-    if (heap_size < initial_reserved_pool_size) {
+    if (heap_size <= initial_reserved_pool_size) {
 
         return NULL;
 
@@ -46,7 +46,7 @@ Allocator* create_allocator(size_t heap_size) {
     alloc->user_pool_border = heap_start;
     alloc->reserved_pool_border =  heap_end - sizeof(Allocator);
     alloc->heap_size = heap_size;
-    alloc->reserved_pool_size = sizeof(Allocator); // Keeps track of memory used for metadata
+    alloc->reserved_pool_size = sizeof(Allocator);
 
     /*
      * Set the Allocator being used to let Allocator functions
@@ -104,18 +104,19 @@ void increase_reserved_pool(size_t increase) {
     char* user_border = current_alloc->user_pool_border;
     char* reserved_border = current_alloc->reserved_pool_border;
 
-    // Check if pools overlap if we incrase the reserved pool
+    // Check if pools overlap if we increase the reserved pool
     if (user_border > reserved_border - increase) {
 
-        // The user pool border has reached the reserved pool border
-
-        // Attempt to reduce memory fragmentation in each pool
+        /*
+         * The user pool border has reached the reserved pool border.
+         * Attempt to reduce memory fragmentation in each pool.
+         */
         cleanse_user_pool();
         cleanse_reserved_pool();
 
         // Retrieve the cleansed memory pool borders
-        char* user_border = current_alloc->user_pool_border;
-        char* reserved_border = current_alloc->reserved_pool_border;
+        user_border = current_alloc->user_pool_border;
+        reserved_border = current_alloc->reserved_pool_border;
 
         // Check if pool cleansing prevents pool overlap
         if (user_border > reserved_border - increase) {
@@ -145,7 +146,7 @@ Node* create_metadata_node(char* memory_start, size_t block_size, bool is_free) 
     MemoryTriplet* triplet = (MemoryTriplet*) current_alloc->reserved_pool_border;
 
     // Set MemoryTriplet member variables
-    triplet->memory_start = (void*) memory_start; // TODO make memory_start char*?
+    triplet->memory_start = memory_start;
     triplet->block_size = block_size;
     triplet->is_free = is_free;
 
@@ -164,11 +165,9 @@ Node* create_metadata_node(char* memory_start, size_t block_size, bool is_free) 
     // Increase the reserved pool to accommodate for the Node
     increase_reserved_pool(sizeof(Node));
 
-    return NULL;
+    return node;
 
 }
-
-
 
 void* allocator_malloc(size_t size) {
 
@@ -181,20 +180,12 @@ void* allocator_malloc(size_t size) {
 
 
     /*
-     *
-     *
-     * Check if there is space?
-     *
-     * Check the linked list for vacant nodes.
-     *
      * Optimiztion: Find the best fitting node in terms
      * of memory block size? Better than naive but more
      * calculations.
      *
-     *
      * Prioritize nodes that are lower in memory compared
      * to higher to avoid raising the user pool border needlessly
-     *
      *
      * Order:
      * Check if there is a node with space.
@@ -240,6 +231,24 @@ void* allocator_malloc(size_t size) {
      * set the 'is_free' to true and use the Node as is.
      */
 
+    // Retrieve Node data
+    MemoryTriplet* triplet = (MemoryTriplet*) available_node->data;
+
+    if (triplet->block_size == size) {
+
+        /*
+         * Node carries exact required memory block size.
+         * Can then just use the Node as is.
+         */
+        triplet->is_free = false;
+
+        return available_node;
+
+    }
+
+    // Need to split up the 'available_node' into a vacant and
+    // in use Node.
+
     return NULL;
 
 }
@@ -247,36 +256,42 @@ void* allocator_malloc(size_t size) {
 
 Node* naive_search(size_t size) {
 
-    Node* meta_node = current_alloc->list->head;
+    Node* node = current_alloc->list->head;
+    Node* found_node = NULL;
 
-    if (meta_node == NULL) {
+    // Loop through the list and find the first vacant Node
+    while (node != NULL) {
 
-        return NULL;
+        MemoryTriplet* triplet = (MemoryTriplet*) node->data;
+
+        if (size <= triplet->block_size && triplet->is_free) {
+
+            // A Node has been found
+            found_node = node;
+            break;
+
+        }
+
+        // Update for next iteration
+        node = node->next;
 
     }
 
-    return NULL;
+    return found_node;
 
 }
 
 
 void destroy_allocator() {
 
-    /*
-    *
-    * Loop through the linked list and free each of the nodes and their
-    * corresponding payload, MemoryTriplet.
-    *
-    *
-    * TODO In reality, all I have to do is call C's free() because
-    * everything is on the managed heap and by freeing it everything
-    * will be handled.
-    * However, I wonder if I should do the it the other way for
-    * practice with memory management??
-    *
-    *
-    */
+    if (current_alloc == NULL) {
 
+        // There is no Allocator object to process
+        return;
+
+    }
+    // Free the managed heap
+    free(current_alloc->heap_start);
 
 }
 
@@ -299,5 +314,3 @@ void release_allocator() {
     current_alloc = NULL;
 
 }
-
-
