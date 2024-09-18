@@ -169,7 +169,7 @@ Node* create_metadata_node(char* memory_start, size_t block_size, bool is_free) 
 
 }
 
-void* allocator_malloc(size_t size) {
+void* allocator_malloc(size_t required_size) {
 
     if (current_alloc == NULL) {
 
@@ -178,27 +178,8 @@ void* allocator_malloc(size_t size) {
 
     }
 
-
-    /*
-     * Optimiztion: Find the best fitting node in terms
-     * of memory block size? Better than naive but more
-     * calculations.
-     *
-     * Prioritize nodes that are lower in memory compared
-     * to higher to avoid raising the user pool border needlessly
-     *
-     * Order:
-     * Check if there is a node with space.
-     * If yes, accept this node, but dont use it yet.
-     * Then start creating the metadata node and see if there is
-     * space in reserved pool.
-     * If metadata node was successfully created, then insert the
-     * actual data into the accepted node.
-     *
-     */
-
     // Attempt to find a Node with an available memory block
-    Node* available_node = naive_search(size);
+    Node* available_node = naive_search(required_size);
 
     if (available_node == NULL) {
 
@@ -211,7 +192,7 @@ void* allocator_malloc(size_t size) {
         cleanse_reserved_pool();
 
         // Try again to find an available memory block
-        available_node = naive_search(size);
+        available_node = naive_search(required_size);
 
         if (available_node == NULL) {
 
@@ -223,18 +204,14 @@ void* allocator_malloc(size_t size) {
 
     /*
      * A Node has been found. Inspect Node to see how to split
-     * up into used memory and free memory Nodes.
-     *
-     * With the split information, create a new metadata node.
-     *
-     * If the Node carries the exact required memory, then simply
-     * set the 'is_free' to true and use the Node as is.
+     * up into allocated memory Node and residual memory Node.
      */
 
     // Retrieve Node data
     MemoryTriplet* triplet = (MemoryTriplet*) available_node->data;
+    size_t node_block_size = triplet->block_size;
 
-    if (triplet->block_size == size) {
+    if (node_block_size == required_size) {
 
         /*
          * Node carries exact required memory block size.
@@ -242,14 +219,23 @@ void* allocator_malloc(size_t size) {
          */
         triplet->is_free = false;
 
-        return available_node;
+        // Return the pointer to the start of the allocated memory
+        return triplet->memory_start;
 
     }
 
-    // Need to split up the 'available_node' into a vacant and
-    // in use Node.
+    // Modify 'available_node' to reflect that it is in use
+    triplet->block_size = required_size;
+    triplet->is_free = false;
 
-    return NULL;
+    // Construct the residual metadata Node
+    char* residual_memory_start = triplet->memory_start + required_size;
+    size_t residual_memory_size = node_block_size - required_size;
+
+    create_metadata_node(residual_memory_start, residual_memory_size, true);
+
+    // Return the pointer to the start of the allocated memory
+    return triplet->memory_start;
 
 }
 

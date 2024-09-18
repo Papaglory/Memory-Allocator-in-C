@@ -148,10 +148,10 @@ void cleanse_reserved_pool();
 * @brief Given the input 'size', allocate memory on the
 * sub heap.
 *
-* @param Determines the size of memory to allocate.
+* @param Determines the required size of memory to allocate.
 * @return Returns a pointer to the allocated memory.
 */
-void* allocator_malloc(size_t size);
+void* allocator_malloc(size_t required_size);
 
 /*
 * @brief Naively search for the first Node with an available
@@ -161,9 +161,6 @@ void* allocator_malloc(size_t size);
 * @return A Node with a memory block fitting the size requirement.
 */
 Node* naive_search(size_t size);
-
-// TODO add comments and implement??
-void best_fit_search();
 
 /*
 * @brief Free up the memory corresponding to the pointer.
