@@ -168,6 +168,98 @@ Node* create_metadata_node(char* memory_start, size_t block_size, bool is_free) 
 
 }
 
+
+
+void* allocator_malloc(size_t size) {
+
+    if (current_alloc == NULL) {
+
+        // There is no Allocator to operate on
+        return NULL;
+
+    }
+
+
+    /*
+     *
+     *
+     * Check if there is space?
+     *
+     * Check the linked list for vacant nodes.
+     *
+     * Optimiztion: Find the best fitting node in terms
+     * of memory block size? Better than naive but more
+     * calculations.
+     *
+     *
+     * Prioritize nodes that are lower in memory compared
+     * to higher to avoid raising the user pool border needlessly
+     *
+     *
+     * Order:
+     * Check if there is a node with space.
+     * If yes, accept this node, but dont use it yet.
+     * Then start creating the metadata node and see if there is
+     * space in reserved pool.
+     * If metadata node was successfully created, then insert the
+     * actual data into the accepted node.
+     *
+     */
+
+    // Attempt to find a Node with an available memory block
+    Node* available_node = naive_search(size);
+
+    if (available_node == NULL) {
+
+        /*
+         * No available Node was found, start pool cleansing
+         * to potensially reduce memory fragmentation and get
+         * more space.
+         */
+        cleanse_user_pool();
+        cleanse_reserved_pool();
+
+        // Try again to find an available memory block
+        available_node = naive_search(size);
+
+        if (available_node == NULL) {
+
+            return NULL;
+
+        }
+
+    }
+
+    /*
+     * A Node has been found. Inspect Node to see how to split
+     * up into used memory and free memory Nodes.
+     *
+     * With the split information, create a new metadata node.
+     *
+     * If the Node carries the exact required memory, then simply
+     * set the 'is_free' to true and use the Node as is.
+     */
+
+    return NULL;
+
+}
+
+
+Node* naive_search(size_t size) {
+
+    Node* meta_node = current_alloc->list->head;
+
+    if (meta_node == NULL) {
+
+        return NULL;
+
+    }
+
+    return NULL;
+
+}
+
+
 void destroy_allocator() {
 
     /*

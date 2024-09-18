@@ -136,6 +136,8 @@ void cleanse_user_pool();
 
 void cleanse_reserved_pool();
 
+
+
 /*
 * @brief Given the input 'size', allocate memory on the
 * sub heap.
@@ -144,6 +146,11 @@ void cleanse_reserved_pool();
 * @return Returns a pointer to the allocated memory.
 */
 void* allocator_malloc(size_t size);
+
+Node* naive_search(size_t size);
+
+void best_fit_search();
+
 
 /*
 * @brief Free up the memory corresponding to the pointer.
