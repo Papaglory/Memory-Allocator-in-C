@@ -74,13 +74,17 @@
 
 typedef struct {
     // Pointer to the start of the managed heap
-    void* heap_start;
+    char* heap_start;
 
     // Pointer to the end of the managed heap
-    void* heap_end;
+    char* heap_end;
 
-    // Pointer to the start of the reserved pool
-    void* reserved_pool_start;
+    /*
+     * Pointer to the lower border of the reserved pool.
+     * As the reserved pool grows downwards, this is where
+     * new metadata will be inserted.
+     */
+    char* reserved_pool_border;
 
     // Size of the managed heap
     size_t heap_size;
@@ -102,6 +106,16 @@ typedef struct {
 */
 Allocator* create_allocator(size_t size);
 
+/*
+* @brief Increase the reserved pool of the Allocator pointed to
+* by 'current_alloc'. This will shift and increase the Allocator's
+* member variables 'reserved_pool_border' and 'reserved_pool_size'
+* respectively with function argument 'increase'.
+*
+* @param The amount to increase the reserved pool.
+*/
+void increase_reserved_pool(size_t increase);
+
 // Creates a memoryTriplet and puts it into A Node??
 // Where do I allocate this?
 // I should allocate it in the reserved portion. Have it
@@ -109,7 +123,7 @@ Allocator* create_allocator(size_t size);
 // Yes, perhaps have it always try to create at the bound,
 // then just move the resserved pool bound??
 // ENSURE THAT THE current_alloc is set!!!
-Node* create_metadata_node(void* memory_start, size_t block_size, bool is_free);
+Node* create_metadata_node(char* memory_start, size_t block_size, bool is_free);
 
 /*
 * @brief Given the input 'size', allocate memory on the

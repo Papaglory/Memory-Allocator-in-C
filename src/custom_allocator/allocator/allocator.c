@@ -25,7 +25,7 @@ Allocator* create_allocator(size_t heap_size) {
     }
 
     // Utilize the built-in C malloc to acquire the managed heap
-    void* heap_start = malloc(heap_size);
+    char* heap_start = (char*) malloc(heap_size);
 
     if (heap_start == NULL) {
 
@@ -34,17 +34,8 @@ Allocator* create_allocator(size_t heap_size) {
 
     }
 
-    /*
-     *
-     * TODO when doing the pointer arithmetic, use char* because
-     * +i in pointer arithmetic moves to the memory address that is
-     * i ( sizeof(pointer type) ). By using char*, we ensure that
-     * +i moves i bytes forward, as intended in the code.
-     *
-     */
-
     // Pointer to the end of the heap
-    void* heap_end = heap_start + heap_size;
+    char* heap_end = heap_start + heap_size;
 
     // Initialize Allocator object at the end of heap
     Allocator* alloc = (Allocator*) heap_end;
@@ -52,12 +43,18 @@ Allocator* create_allocator(size_t heap_size) {
     // Set Allocator member variables
     alloc->heap_start = heap_start;
     alloc->heap_end = heap_end;
-    alloc->reserved_pool_start = heap_start + heap_size;
+    alloc->reserved_pool_border =  heap_end - sizeof(Allocator);
     alloc->heap_size = heap_size;
     alloc->reserved_pool_size = sizeof(Allocator); // Keeps track of memory used for metadata
 
+    /*
+     * Set the Allocator being used to let Allocator functions
+     * know which Allocator object to process.
+     */
+    set_allocator(alloc);
+
     // Initialize LinkedList object
-    LinkedList* list = heap_end - alloc->reserved_pool_size;
+    LinkedList* list = (LinkedList*) alloc->reserved_pool_border;
 
     // Set LinkedList member variables
     list->head = NULL;
@@ -65,14 +62,11 @@ Allocator* create_allocator(size_t heap_size) {
     list->size = 0;
     list->next_id = 0;
 
-    // Add memory used by LinkedList to the reserved pool size
-    alloc->reserved_pool_size += sizeof(LinkedList);
+    // Increase the reserved pool to accommodate for the LinkedList
+    increase_reserved_pool(sizeof(LinkedList));
 
     // Set Allocator member variable
     alloc->list = list;
-
-    // Set the Allocator being used to update Allocator functions
-    set_allocator(alloc);
 
     // Initialize a Node referencing the entire user memory pool
     void* memory_start = heap_start;
@@ -80,6 +74,8 @@ Allocator* create_allocator(size_t heap_size) {
     * In determining the size of the initial user pool we also account
     * for the Node which will be created and stored in the reserved pool.
     * Note that the payload of Node is a MemoryTriplet object.
+    * Therefore, we subtract the size of Node and MemoryTriplet from
+    * the initial user pool.
     */
     size_t block_size =
         heap_size
@@ -94,22 +90,55 @@ Allocator* create_allocator(size_t heap_size) {
     return alloc;
 }
 
+void increase_reserved_pool(size_t increase) {
 
-Node* create_metadata_node(void* memory_start, size_t block_size, bool is_free) {
+    if (current_alloc == NULL) {
 
-    MemoryTriplet* triplet = create_memory_triplet(memory_start, block_size, is_free);
+        // There is no Allocator to operate on
+        return;
+
+    }
+
+    // Shift the border of the reserved pool downwards
+    current_alloc->reserved_pool_border -= increase;
+    current_alloc->reserved_pool_size += increase;
 
 
+    // TODO Maybe have a check to see if the memory that we expand
+    // to is free, else try clean up, and if it fails, heap is full
 
-    // Add memory used by MemoryTriplet to the reserved pool size
-    current_alloc->reserved_pool_size += sizeof(MemoryTriplet);
+}
 
-    // Create Node containing the memory_triplet
-    Node* node = create_node((void*) triplet, sizeof(MemoryTriplet));
+Node* create_metadata_node(char* memory_start, size_t block_size, bool is_free) {
 
-    // Add memory used by Node to the reserved pool size
-    current_alloc->reserved_pool_size += sizeof(Node);
+    if (current_alloc == NULL || memory_start == NULL) {
 
+        // There is no Allocator to work on or function argument missing!
+        return NULL;
+
+    }
+
+    MemoryTriplet* triplet = (MemoryTriplet*) current_alloc->reserved_pool_border;
+
+    // Set MemoryTriplet member variables
+    triplet->memory_start = (void*) memory_start; // TODO make memory_start char*?
+    triplet->block_size = block_size;
+    triplet->is_free = is_free;
+
+    // Increase the reserved pool to accommodate for the MemoryTriplet
+    increase_reserved_pool(sizeof(MemoryTriplet));
+
+    // Create Node containing the MemoryTriplet
+    Node* node = (Node*) current_alloc->reserved_pool_border;
+
+    // Set Node member variables
+    node->data = (void*) triplet;
+    node->data_size = sizeof(MemoryTriplet);
+    node->next = NULL;
+    node->id = 0;
+
+    // Increase the reserved pool to accommodate for the Node
+    increase_reserved_pool(sizeof(Node));
 
     return NULL;
 
