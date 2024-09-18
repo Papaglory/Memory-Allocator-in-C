@@ -55,14 +55,12 @@
  * an Allocator object.
  *
  * Memory pool: All the memory within the managed heap.
- * Reserved pool: The memory within the managed heap dedicated
  *
- * to initialize an Allocator during its creation.
  * User pool: The memory within the managed heap dedicated for
- * use by users or clients.
+ * actual use.
  *
- * TODO ADD MORE?
- *
+ * Reserved pool: The memory within the managed heap dedicated
+ * for Allocator metadata.
  */
 
 #ifndef ALLOCATOR_H
@@ -78,6 +76,12 @@ typedef struct {
 
     // Pointer to the end of the managed heap
     char* heap_end;
+
+    /*
+     * Points to the upper border of the user pool that
+     * is in use.
+     */
+    char* user_pool_border;
 
     /*
      * Pointer to the lower border of the reserved pool.
@@ -127,6 +131,11 @@ void increase_reserved_pool(size_t increase);
 */
 Node* create_metadata_node(char* memory_start, size_t block_size, bool is_free);
 
+
+void cleanse_user_pool();
+
+void cleanse_reserved_pool();
+
 /*
 * @brief Given the input 'size', allocate memory on the
 * sub heap.
@@ -147,12 +156,11 @@ void* allocator_free(void* ptr);
 void* allocator_realloc(size_t size);
 
 /*
-* $brief Destory the given term object and free
-* it from the heap.
-*
-* @param Pointer to the object to be destroyed.
+* $brief Destory the Allocator pointed to by 'current_alloc' and its
+* corresonding metadata. Then free the managed heap from memory by
+* calling C's built-in free().
 */
-void destroy_allocator(Allocator* alloc);
+void destroy_allocator();
 
 /*
 * @brief Set a new Allocator object to the allocator functions.

@@ -43,6 +43,7 @@ Allocator* create_allocator(size_t heap_size) {
     // Set Allocator member variables
     alloc->heap_start = heap_start;
     alloc->heap_end = heap_end;
+    alloc->user_pool_border = heap_start;
     alloc->reserved_pool_border =  heap_end - sizeof(Allocator);
     alloc->heap_size = heap_size;
     alloc->reserved_pool_size = sizeof(Allocator); // Keeps track of memory used for metadata
@@ -99,8 +100,32 @@ void increase_reserved_pool(size_t increase) {
 
     }
 
-    // TODO Maybe have a check to see if the memory that we expand
-    // to is free, else try clean up, and if it fails, heap is full
+    // Retrieve the memory pool borders
+    char* user_border = current_alloc->user_pool_border;
+    char* reserved_border = current_alloc->reserved_pool_border;
+
+    // Check if pools overlap if we incrase the reserved pool
+    if (user_border > reserved_border - increase) {
+
+        // The user pool border has reached the reserved pool border
+
+        // Attempt to reduce memory fragmentation in each pool
+        cleanse_user_pool();
+        cleanse_reserved_pool();
+
+        // Retrieve the cleansed memory pool borders
+        char* user_border = current_alloc->user_pool_border;
+        char* reserved_border = current_alloc->reserved_pool_border;
+
+        // Check if pool cleansing prevents pool overlap
+        if (user_border > reserved_border - increase) {
+
+            // Cleaning up the pools did not work, heap is considered full
+            return;
+
+        }
+
+    }
 
     // Shift the border of the reserved pool downwards
     current_alloc->reserved_pool_border -= increase;
@@ -142,6 +167,27 @@ Node* create_metadata_node(char* memory_start, size_t block_size, bool is_free) 
     return NULL;
 
 }
+
+void destroy_allocator() {
+
+    /*
+    *
+    * Loop through the linked list and free each of the nodes and their
+    * corresponding payload, MemoryTriplet.
+    *
+    *
+    * TODO In reality, all I have to do is call C's free() because
+    * everything is on the managed heap and by freeing it everything
+    * will be handled.
+    * However, I wonder if I should do the it the other way for
+    * practice with memory management??
+    *
+    *
+    */
+
+
+}
+
 
 void set_allocator(Allocator* alloc) {
 
