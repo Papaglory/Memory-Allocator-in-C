@@ -131,12 +131,18 @@ void increase_reserved_pool(size_t increase);
 */
 Node* create_metadata_node(char* memory_start, size_t block_size, bool is_free);
 
-
+/*
+* @brief Clean the user pool by reducing memory fragment and
+* move the used memory to lower addresses in order to lower
+* the user pool border.
+*/
 void cleanse_user_pool();
 
+/*
+* @brief Clean the reserved pool by moving the metadata to higher
+* memory addresses in order to raise the reserved pool border.
+*/
 void cleanse_reserved_pool();
-
-
 
 /*
 * @brief Given the input 'size', allocate memory on the
@@ -147,10 +153,17 @@ void cleanse_reserved_pool();
 */
 void* allocator_malloc(size_t size);
 
+/*
+* @brief Naively search for the first Node with an available
+* memory block fitting 'size'.
+*
+* @param The size requirement for the memory block.
+* @return A Node with a memory block fitting the size requirement.
+*/
 Node* naive_search(size_t size);
 
+// TODO add comments and implement??
 void best_fit_search();
-
 
 /*
 * @brief Free up the memory corresponding to the pointer.
