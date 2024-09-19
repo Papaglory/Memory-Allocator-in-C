@@ -61,6 +61,9 @@
  *
  * Reserved pool: The memory within the managed heap dedicated
  * for Allocator metadata.
+ *
+ * Metadata Node: A Node along with its corresponding payload
+ * being a MemoryData object.
  */
 
 #ifndef ALLOCATOR_H
@@ -89,6 +92,15 @@ typedef struct {
      * new metadata will be inserted.
      */
     char* reserved_pool_border;
+
+
+    /*
+     * The least amount of memory needed to initialize
+     * an Allocator object and its metadata during creation.
+     * Used to locate the metadata Node closest to the
+     * top of the managed heap during cleansing.
+     */
+    size_t initial_reserved_pool_size;
 
     // Size of the managed heap
     size_t heap_size;
