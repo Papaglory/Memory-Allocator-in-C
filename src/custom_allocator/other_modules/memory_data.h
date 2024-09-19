@@ -15,6 +15,9 @@ typedef struct {
     // Whether the memory block is free or used
     bool is_free;
 
+    // Whether the MemoryData is in use or not
+    bool in_use;
+
 } MemoryData;
 
 /*

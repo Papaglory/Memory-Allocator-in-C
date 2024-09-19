@@ -164,6 +164,7 @@ Node* create_metadata_node(char* memory_start, size_t block_size, bool is_free) 
     data->memory_start = memory_start;
     data->block_size = block_size;
     data->is_free = is_free;
+    data->in_use = true;
 
     // Increase the reserved pool to accommodate for the MemoryData
     increase_reserved_pool(sizeof(MemoryData));
@@ -185,14 +186,32 @@ void cleanse_reserved_pool() {
 
     }
 
+    // This will be the increments when doing metadata Node traversal
+    size_t metadata_node_size = sizeof(Node) + sizeof(MemoryData);
+
     // Memory location of the first metadata Node
     char* meta_data_node =
         current_alloc->heap_end
         - current_alloc->initial_reserved_pool_size;
 
 
+    while (meta_data_node > current_alloc->reserved_pool_border) {
+
+
+        // Iterate through the metadata nodes
+
+    }
+
+    // Retrieve the metadata Node's corresponding MemoryData
+    MemoryData* data = (MemoryData*) (meta_data_node - sizeof(Node));
 
     /*
+     * Remember that the order is Node and then MemoryData
+     * while growing downwards.
+     *
+     *
+     *
+     *
      *
      * If I encounter a metadata node, how do I know if it
      * is still in use or not. How do I know if I can
@@ -344,9 +363,9 @@ Node* naive_search(size_t size) {
     // Loop through the list and find the first vacant Node
     while (node != NULL) {
 
-        MemoryData* memory_data = (MemoryData*) node->data;
+        MemoryData* data = (MemoryData*) node->data;
 
-        if (size <= memory_data->block_size && memory_data->is_free) {
+        if (size <= data->block_size && data->is_free) {
 
             // A Node has been found
             found_node = node;
