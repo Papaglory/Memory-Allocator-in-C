@@ -189,21 +189,39 @@ void cleanse_reserved_pool() {
     // This will be the increments when doing metadata Node traversal
     size_t metadata_node_size = sizeof(Node) + sizeof(MemoryData);
 
-    // Memory location of the first metadata Node
+    // Memory location for the start of metadata Node traversal
     char* meta_data_node =
         current_alloc->heap_end
         - current_alloc->initial_reserved_pool_size;
 
 
+    // Iterate through the metadata Nodes
     while (meta_data_node > current_alloc->reserved_pool_border) {
 
+        // Retrieve Node's corresponding MemoryData
+        MemoryData* data = (MemoryData*) (meta_data_node - sizeof(Node));
 
-        // Iterate through the metadata nodes
+        if (data->in_use == false) {
+
+            /*
+             * Metadata Node is no longer in use,
+             * find the metadata Node that lies at the
+             * reserved pool border and move it here.
+             */
+
+
+            // TODO make sure that it is not the same
+            // node by checking the node id???
+            // Also make sure we dont pass the address
+            // we are currently at.
+        }
+
+        // Update traversal data
+        meta_data_node -= metadata_node_size;
 
     }
 
-    // Retrieve the metadata Node's corresponding MemoryData
-    MemoryData* data = (MemoryData*) (meta_data_node - sizeof(Node));
+
 
     /*
      * Remember that the order is Node and then MemoryData
