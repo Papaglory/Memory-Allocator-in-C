@@ -24,8 +24,11 @@ Node* create_node(void* data, size_t data_size) {
 
     }
 
-    // Copy the data pointed by 'data' into location
-    // pointed to by 'node->data'
+    /*
+    * Copy the data pointed by 'data' into location
+    * pointed to by 'node->data'.
+    */
+
     memcpy(node->data, data, data_size);
 
     // Initialize the other members

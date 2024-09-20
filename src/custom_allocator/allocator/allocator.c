@@ -1,3 +1,4 @@
+#include <string.h>
 #include <stddef.h>
 #include <stdlib.h>
 #include "allocator.h"
@@ -176,7 +177,24 @@ Node* create_metadata_node(char* memory_start, size_t block_size, bool is_free) 
 
 }
 
-
+/*
+ * Important notes:
+ *
+ * Remember that the order is Node and then MemoryData
+ * while growing downwards in the reserved pool
+ *
+ * When a metadata Node is created,
+ * there is always a corresponding memory data.
+ * In the reserved pool, from high memory to low, this
+ * will look like "bytes of the Node" + "bytes of the MemoryData".
+ *
+ * Therefore, when going through the metadata nodes,
+ * we have to account for the size of both
+ * the Node and the memoryData.
+ *
+ * Remember to move the reserved pool border as well as
+ * the reserved pool size.
+ */
 void cleanse_reserved_pool() {
 
     if (current_alloc == NULL) {
@@ -187,13 +205,12 @@ void cleanse_reserved_pool() {
     }
 
     // This will be the increments when doing metadata Node traversal
-    size_t metadata_node_size = sizeof(Node) + sizeof(MemoryData);
+    size_t meta_data_node_size = sizeof(Node) + sizeof(MemoryData);
 
     // Memory location for the start of metadata Node traversal
     char* meta_data_node =
         current_alloc->heap_end
         - current_alloc->initial_reserved_pool_size;
-
 
     // Iterate through the metadata Nodes
     while (meta_data_node > current_alloc->reserved_pool_border) {
@@ -204,101 +221,62 @@ void cleanse_reserved_pool() {
         if (data->in_use == false) {
 
             /*
-             * Metadata Node is no longer in use,
-             * find the metadata Node that lies at the
-             * reserved pool border and move it here.
+             * Found an available metadata Node space.
              */
 
+            Node* border_node = (Node*) current_alloc->reserved_pool_border;
+            MemoryData* border_data = (MemoryData*) border_node->data;
 
-            // TODO make sure that it is not the same
-            // node by checking the node id???
-            // Also make sure we dont pass the address
-            // we are currently at.
+            /*
+             * Check for unintended situations:
+             * The border Node is not in use, thus the border is
+             * located at a wrong memory address!
+             *
+             * Or The border Node is at a higher memory address
+             * than the address where we want to move it to.
+             * We are thus done with the cleansing.
+             */
+            if (border_data->in_use == false || (char*) border_node > meta_data_node) {
+
+                return;
+
+            }
+
+            // Move the border Node to the vacant Node space
+            memcpy(meta_data_node, border_node, meta_data_node_size);
+
+            // Update the reserved pool border
+            char* new_border = current_alloc->reserved_pool_border;
+            size_t new_pool_size = current_alloc->reserved_pool_size;
+            while (new_border < meta_data_node) {
+
+                // Move the border to new potensial location
+                new_border += meta_data_node_size;
+                new_pool_size -= meta_data_node_size;
+
+                Node* new_border_node = (Node*) current_alloc->reserved_pool_border;
+                MemoryData* new_border_data = (MemoryData*) border_node->data;
+
+                // Check if the Node is in use
+                if (new_border_data->in_use == false) {
+
+                    // Metadata Node is not in use, can therefore move border further
+                    continue;
+
+                }
+
+                // Node is in use, new border will therefore be here
+                current_alloc->reserved_pool_border = new_border;
+                current_alloc->reserved_pool_size = new_pool_size;
+
+            }
+
         }
 
         // Update traversal data
-        meta_data_node -= metadata_node_size;
+        meta_data_node -= meta_data_node_size;
 
     }
-
-
-
-    /*
-     * Remember that the order is Node and then MemoryData
-     * while growing downwards.
-     *
-     *
-     *
-     *
-     *
-     * If I encounter a metadata node, how do I know if it
-     * is still in use or not. How do I know if I can
-     * mark the space as free?
-     * Maybe give the node a variable that tells if it is
-     * in use or not???
-     * Check if it is still in the linked list???
-     * If I have to check every Node, that will be something
-     * like O(n^2)
-     *
-     *
-     *
-     *
-     * How to retrieve the pointer to the first metadata node
-     * closest to the top of the heap?
-     *
-     * Linkedlist head might move due to fragmentation...
-     *
-     * Simplest would be to calcualte the fixed address
-     * of the placement of the first metadata node given
-     * the initial memory used by the allocator....
-     *
-     *
-     *
-     *
-     * When a metadata Node is created,
-     * there is always a corresponding memory data.
-     * In the reserved pool, from high memory to low, this
-     * will look like "bytes of the Node" + "bytes of the MemoryData".
-     *
-     * Therefore, when going through the metadata nodes,
-     * we have to account for the size of both
-     * the Node and the memoryData.
-     *
-     *
-     * Perhaps not go through the linkedlist??
-     * What about starting from the start of the
-     * reserved pool and then go through each
-     * metadata node? If a free spot is found, then
-     * use the reserved pool border to retrieve the
-     * metadata node that lies the furthest away to make
-     * the resrved pool more compact?
-     *
-     * Check that when going from each node there is
-     * no free space. If there is free space, mark it.
-     *
-     * Then choose the Node that resides the furthest
-     * away from the highest memory address and move it
-     * to the marked free space.
-     *
-     * Continue searching for a new free space. If one is
-     * found, mark it and look for the Node that is currently
-     * the furthest away from the highest memory space.
-     *
-     * Remember to move the reserved pool border as well as
-     * the reserved pool size.
-     *
-     *
-     * QUESTION: How to retrieve the furthest away Node??
-     * Maybe use the reserved pool border? We know that
-     * one metadata node corresponds to a node and a
-     * memorydata. Can then simply retrieve the node
-     * and data from this pointer.
-     *
-     */
-
-
-
-
 
 }
 
