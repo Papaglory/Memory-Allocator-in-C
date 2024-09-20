@@ -178,22 +178,23 @@ Node* create_metadata_node(char* memory_start, size_t block_size, bool is_free) 
 }
 
 /*
- * Important notes:
+ * @details Loop through the metadata Nodes in the reserved pool
+ * from high memory to lower memory. If a metadata Node that is
+ * not in use is found, then move the metadata Node at the pool
+ * border to take its place and update the border pointer and
+ * reserved pool size.
  *
- * Remember that the order is Node and then MemoryData
- * while growing downwards in the reserved pool
+ * A metadata Node consits of a Node and a MemoryData object.
+ * Therefore, when going from high memory to lower memory, we
+ * have the order:
  *
- * When a metadata Node is created,
- * there is always a corresponding memory data.
- * In the reserved pool, from high memory to low, this
- * will look like "bytes of the Node" + "bytes of the MemoryData".
+ * HIGH MEMORY
  *
- * Therefore, when going through the metadata nodes,
- * we have to account for the size of both
- * the Node and the memoryData.
+ * Node
  *
- * Remember to move the reserved pool border as well as
- * the reserved pool size.
+ * MemoryData
+ *
+ * LOW MEMORY.
  */
 void cleanse_reserved_pool() {
 
