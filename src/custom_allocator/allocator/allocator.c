@@ -379,6 +379,69 @@ Node* naive_search(size_t size) {
 
 }
 
+void* allocator_free(void* ptr) {
+
+    /*
+    *
+    *
+    *
+    */
+
+    if (current_alloc == NULL) {
+
+        // There is no Allocator object to process
+        return NULL;
+
+    }
+
+
+
+    // Loop through the LinkedList searching for a Node
+    // corresponding with the argument pointer.
+
+
+    LinkedList* list = current_alloc->list;
+
+    Node* node = list->head;
+
+    if (node == NULL) {
+
+        // There is no head Node, a bug has occured
+        return NULL;
+
+    }
+
+    while (true) {
+
+        MemoryData* data = (MemoryData*) node->data;
+
+        if (node->id == list->tail->id) {
+
+
+
+        }
+
+        if (data->memory_start == ptr) {
+
+            // Node has been found
+            // The memory is to be set free
+            // The node and memory block is to be merged
+            // with any adjacent nodes / blocks
+
+
+        }
+
+        node = node->next;
+
+    }
+
+
+
+    return NULL;
+
+}
+
+
 
 void destroy_allocator() {
 
@@ -388,6 +451,7 @@ void destroy_allocator() {
         return;
 
     }
+
     // Free the managed heap
     free(current_alloc->heap_start);
 
