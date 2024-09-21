@@ -4,6 +4,7 @@
 #include "allocator.h"
 #include "../other_modules/memory_data.h"
 #include "../linked_list/node.h"
+#include "../linked_list/linked_list_iterator.h"
 
 /**
  * The Allocator currently referenced to when
@@ -343,8 +344,9 @@ void* allocator_malloc(size_t required_size) {
     // Construct the residual metadata Node
     char* residual_memory_start = data->memory_start + required_size;
     size_t residual_memory_size = node_block_size - required_size;
+    bool is_free = false;
 
-    create_metadata_node(residual_memory_start, residual_memory_size, true);
+    create_metadata_node(residual_memory_start, residual_memory_size, is_free);
 
     // Return the pointer to the start of the allocated memory
     return data->memory_start;
@@ -381,12 +383,6 @@ Node* naive_search(size_t size) {
 
 void* allocator_free(void* ptr) {
 
-    /*
-    *
-    *
-    *
-    */
-
     if (current_alloc == NULL) {
 
         // There is no Allocator object to process
@@ -394,40 +390,38 @@ void* allocator_free(void* ptr) {
 
     }
 
-
-
-    // Loop through the LinkedList searching for a Node
-    // corresponding with the argument pointer.
-
-
     LinkedList* list = current_alloc->list;
 
-    Node* node = list->head;
+    // Create iterator on the stack
+    LinkedListIterator iter;
+    iter.current = get_head(list);
 
-    if (node == NULL) {
+    if (get_head(list) == NULL) {
 
         // There is no head Node, a bug has occured
         return NULL;
 
     }
 
-    while (true) {
+    // Search for the Node corresponding to 'ptr' in the LinkedList
+    Node* matched_node;
+    while (has_next(&iter)) {
 
+        Node* node = next(&iter);
         MemoryData* data = (MemoryData*) node->data;
-
-        if (node->id == list->tail->id) {
-
-
-
-        }
 
         if (data->memory_start == ptr) {
 
             // Node has been found
-            // The memory is to be set free
-            // The node and memory block is to be merged
-            // with any adjacent nodes / blocks
+            matched_node = node;
+            break;
 
+        }
+
+        if (node->id == list->tail->id) {
+
+            // End of list and there is no corresponding Node
+            return NULL;
 
         }
 
@@ -435,7 +429,95 @@ void* allocator_free(void* ptr) {
 
     }
 
+    /*
+     * The corresponding Node has been found!
+     *
+     * We need to free it.
+     *
+            // Node has been found
+            // The memory is to be set free
+            // The node and memory block is to be merged
+            // with any adjacent nodes / blocks
+    */
 
+    MemoryData* matched_data = (MemoryData*) matched_node->data;
+
+    // Node is still in use, it is just set free for the moment
+    // If it is merged with another node, then it is considered
+    // not in use.
+
+    /*
+     * How to figure out if a memory block is adjacent??
+     * Have to go through every Node and compare
+     * the start_pointer and the block_size??
+     *
+     * For memory block after, need only to check if the Node's data
+     * memory_start is equal to the current Nodes memory start + blocksize.
+     *
+     * For memory block before, we need to see if memory_start + block_size
+     * exactly reaches the memory_start of current Node.
+     *
+     * If it exceeds the memory_start of current Node, then there is a bug
+     * because the memory block of two metadata nodes overlap which should
+     * never be the case.
+     *
+     *
+     *
+     *
+     *
+     * There will be adjacent nodes as long as there are multiple nodes.
+     * The question is, are the adjacent nodes free or not?
+    *
+    *
+    */
+
+    // Reset the iterator and look for adjacent Nodes
+    iter.current = get_head(list);
+
+    char* matched_memory_start = matched_data->memory_start;
+    char* matched_memory_end = matched_memory_start + matched_data->block_size;
+
+    Node* potential_adjacent_node;
+    while (has_next(&iter)) {
+
+        Node* potential_adjacent_node = next(&iter);
+        MemoryData* potential_adjacent_data = potential_adjacent_node->data;
+
+        // Reading ease
+        char* potential_memory_start = potential_adjacent_data->memory_start;
+        char* potential_memory_end =
+            potential_memory_start
+            + potential_adjacent_data->block_size;
+
+        if (potential_memory_end == matched_memory_start) {
+
+            /*
+             * The Node carries a memory block before the matched Node
+            *
+            */
+
+
+
+        }
+
+
+        if (potential_memory_start == matched_memory_end) {
+
+
+            /*
+             * The Node carries a memory block after the matched Node
+            *
+            */
+
+
+
+        }
+
+    }
+
+    // No adjacent nodes were found
+    // We do this if there is no adjacent node to merge with
+    matched_data->is_free = true;
 
     return NULL;
 

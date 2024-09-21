@@ -1,3 +1,11 @@
+/**
+ * @file linked_list_iterator.h
+ * @note
+ *
+ * The function has_next() will start by returning
+ * the head Node of the LinkedList.
+ */
+
 #ifndef LINKEDLISTITERATOR_H
 #define LINKEDLISTITERATOR_H
 
