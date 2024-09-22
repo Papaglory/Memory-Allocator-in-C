@@ -179,7 +179,7 @@ Node* naive_search(size_t size);
 *
 * @param Pointer to the object to be freed.
 */
-void* allocator_free(void* ptr);
+void allocator_free(void* ptr);
 
 // TODO Add comments
 void* allocator_realloc(size_t size);

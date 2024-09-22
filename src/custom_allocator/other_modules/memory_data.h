@@ -15,7 +15,14 @@ typedef struct {
     // Whether the memory block is free or used
     bool is_free;
 
-    // Whether the MemoryData is in use or not
+    /*
+     * Whether the metadata Node is in use or not
+     * (part of a LinkedList). To clarify, a
+     * metadata Node may be found on the managed heap,
+     * this variable lets us know if the node is no
+     * longer in use (we can overwrite the memory occupied
+     * by the Node) or it is still in use by the Allocator.
+     */
     bool in_use;
 
 } MemoryData;

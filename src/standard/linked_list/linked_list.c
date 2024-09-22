@@ -87,6 +87,7 @@ LinkedList* delete_node(LinkedList* list, size_t id) {
         return NULL;
 
     }
+
     Node* current = next(iter);
 
     // Check if head corresponds with 'id'
@@ -131,7 +132,7 @@ LinkedList* delete_node(LinkedList* list, size_t id) {
             destroy_node(current);
             list->size--;
 
-            break;
+            return list;
 
         }
 
@@ -143,7 +144,7 @@ LinkedList* delete_node(LinkedList* list, size_t id) {
 
     destroy_iterator(iter);
 
-    return list;
+    return NULL;
 
 }
 
