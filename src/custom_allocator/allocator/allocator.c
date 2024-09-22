@@ -179,7 +179,172 @@ Node* create_metadata_node(char* memory_start, size_t block_size, bool is_free) 
 }
 
 /*
- * @details Loop through the metadata Nodes in the reserved pool
+* @brief Merge the two metadata Nodes into a single Node. The
+* left Node will remain while the right Node will be discarded.
+* Thereafter, the discarded Node is removed from the LinkedList.
+*
+* @param1 The LinkedList containing the Nodes.
+* @param2 The left Node.
+* @param3 The right Node.
+* @return A pointer to the merged Node (same address as 'left_node').
+*/
+Node* merge_meta_data_nodes(LinkedList* list, Node* left_node, Node* right_node) {
+
+    if (list == NULL || left_node == NULL || right_node == NULL) {
+
+        // Function argument(s) missing
+        return NULL;
+
+    }
+
+    MemoryData* left_data = left_node->data;
+    MemoryData* right_data = right_node->data;
+
+    // Check that the 'left_node' is left adjacent to 'right_node'
+    if (left_data->memory_start + left_data->block_size != right_data->memory_start) {
+
+        return NULL;
+
+    }
+
+    // merge the block sizes
+    left_data->block_size += right_data->block_size;
+
+    // Mark the right Node as vacant
+    right_data->in_use = false;
+    right_data->is_free = true;
+
+    // Remove the discarded Node from the LinkedList
+    size_t id = right_node->id;
+    delete_node(list, id);
+
+    return left_node;
+
+}
+
+void cleanse_user_pool() {
+
+
+    if (current_alloc == NULL) {
+
+        // There is no Allocator to operate on
+        return;
+
+    }
+
+
+    /*
+     *
+     *
+     * Merge adjacent Nodes??
+     * Only merge nodes that are both free and adjacent.
+     * Move higher memory allocated blocks to lower memory if possible.
+     *
+     *
+     *
+     *
+     *
+     * TODO for improvements, implement merge sort for linked list.
+     * sort linked list: O(nlogn)
+     * merge adjacent nodes: O(n)
+     *
+     *
+     *
+     *
+     * For each node, go through the list and see if there is any
+     * nodes to merge with.
+     *
+     *
+     * k
+     */
+
+    LinkedList* list = current_alloc->list;
+
+    LinkedListIterator iter;
+    iter.current = get_head(list);
+
+    while (has_next(&iter)) {
+
+        Node* node = next(&iter);
+        MemoryData* data = node->data;
+
+        char* memory_start = data->memory_start;
+        char* memory_end = memory_start + data->block_size;
+
+        size_t id = node->id;
+
+        if (data->is_free == false) {
+
+            // Only Nodes with free memory blocks can be merged
+            continue;
+
+        }
+
+        // Look for adjacent nodes
+        LinkedListIterator inner_iter;
+        inner_iter.current = get_head(list);
+
+        while (has_next(&inner_iter)) {
+
+            Node* inner_node = next(&inner_iter);
+            MemoryData* inner_data = inner_node->data;
+
+            char* inner_memory_start = inner_data->memory_start;
+            char* inner_memory_end = inner_memory_start + inner_data->block_size;
+
+            size_t inner_id = inner_node->id;
+
+            if (inner_data->is_free == false || id == inner_id) {
+
+                // Only interested in free and unique Nodes
+                continue;
+
+            }
+
+            // Check if the inner Node is a right adjacent Node to merge with
+            if (memory_start == memory_end) {
+
+                merge_meta_data_nodes(list, node, inner_node);
+
+            }
+
+            // Check if the inner Node is a left adjacent Node to merge with
+            if (inner_memory_end == memory_start) {
+
+                merge_meta_data_nodes(list, inner_node, node);
+
+            }
+
+
+        } // End while
+
+    } // End while
+
+    // The Nodes have been merged. Now time to try and move them to lower memory
+
+
+
+
+    /*
+     *
+     * I could just move everything down, like slide down the whole thing?
+     * Every node will be moved at most once.
+     *
+     * Does the list need to be sorted then? Yes because I would always
+     * want to retrieve the memory block that is next.
+     *
+     *
+     *
+     *
+     */
+
+
+
+}
+
+/*
+ * @details
+ * Loop through the metadata Nodes in the reserved pool
  * from high memory to lower memory. If a metadata Node that is
  * not in use is found, then move the metadata Node at the pool
  * border to take its place and update the border pointer and
@@ -252,7 +417,7 @@ void cleanse_reserved_pool() {
             size_t new_pool_size = current_alloc->reserved_pool_size;
             while (new_border < meta_data_node) {
 
-                // Move the border to new potensial location
+                // Move the border to new potential location
                 new_border += meta_data_node_size;
                 new_pool_size -= meta_data_node_size;
 
@@ -298,7 +463,7 @@ void* allocator_malloc(size_t required_size) {
 
         /*
          * No available Node was found, start pool cleansing
-         * to potensially reduce memory fragmentation and get
+         * to potentially reduce memory fragmentation and get
          * more space.
          */
         cleanse_user_pool();
@@ -353,7 +518,6 @@ void* allocator_malloc(size_t required_size) {
 
 }
 
-
 Node* naive_search(size_t size) {
 
     // Loop through the LinkedList and find the first vacant memory block
@@ -378,65 +542,6 @@ Node* naive_search(size_t size) {
     return found_node;
 
 }
-
-/*
-* @brief Merge the two metadata Nodes into a single Node. The
-* left Node will remain while the right Node will be discarded.
-* Thereafter, the discarded Node is removed from the LinkedList.
-*
-* @param1 The LinkedList containing the Nodes.
-* @param2 The left Node.
-* @param3 The right Node.
-* @return A pointer to the merged Node (same address as 'left_node').
-*/
-Node* merge_meta_data_nodes(LinkedList* list, Node* left_node, Node* right_node) {
-
-    if (list == NULL || left_node == NULL || right_node == NULL) {
-
-        // Function argument(s) missing
-        return NULL;
-
-    }
-
-    MemoryData* left_data = left_node->data;
-    MemoryData* right_data = right_node->data;
-
-    // Check that the 'left_node' is left adjacent to 'right_node'
-    if (left_data->memory_start + left_data->block_size != right_data->memory_start) {
-
-        return NULL;
-
-    }
-
-    // merge the block sizes
-    left_data->block_size += right_data->block_size;
-
-    // Mark the right Node as vacant
-    right_data->in_use = false;
-    right_data->is_free = true;
-
-    // Remove the discarded Node from the LinkedList
-    size_t id = right_node->id;
-    delete_node(list, id);
-
-    return left_node;
-
-}
-
-    /*
-     * For memory block after, need only to check if the Node's data
-     * memory_start is equal to the current Nodes memory start + blocksize.
-     *
-     * For memory block before, we need to see if memory_start + block_size
-     * exactly reaches the memory_start of current Node.
-     *
-     * If it exceeds the memory_start of current Node, then there is a bug
-     * because the memory block of two metadata nodes overlap which should
-     * never be the case.
-     *
-    *
-    *
-    */
 
 /*
  * @details
@@ -525,22 +630,18 @@ void allocator_free(void* ptr) {
             memory_start
             + data->block_size;
 
-        // Check if there is a left adjacent Node to merge with
-        if (memory_end == matched_memory_start) {
-
-            /*
-             * Have the pointer point to the merged Node in case there
-             * is a right adjacent Node to merge with as well.
-             */
-            matched_node = merge_meta_data_nodes(list, node, matched_node);
-            has_merged = true;
-
-        }
-
         // Check if there is a right adjacent Node to merge with
         if (memory_start == matched_memory_end) {
 
             merge_meta_data_nodes(list, matched_node, node);
+            has_merged = true;
+
+        }
+
+        // Check if there is a left adjacent Node to merge with
+        if (memory_end == matched_memory_start) {
+
+            merge_meta_data_nodes(list, node, matched_node);
             has_merged = true;
 
         }
