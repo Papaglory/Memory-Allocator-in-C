@@ -14,6 +14,7 @@ Node* split_list(Node* head) {
     // Slow and fast pointer technique
     Node* slow = head;
     Node* fast = head;
+    Node* cutoff_node = NULL;
 
     /*
     * Loop until the fast pointer has reached the end of
@@ -21,10 +22,14 @@ Node* split_list(Node* head) {
     */
     while (fast != NULL && fast->next != NULL) {
 
+        cutoff_node = slow;
         slow = slow->next;
         fast = fast->next->next;
 
     }
+
+    // Cut the next reference to separate the two lists
+    cutoff_node->next = NULL;
 
     return slow;
 
@@ -76,15 +81,40 @@ Node* merge_sort(Node* head) {
 
     Node* middle = split_list(head);
     Node* left = head;
-    Node* right = middle->next;
-
-    // Make an end to the first half ot the list
-    middle->next = NULL;
+    Node* right = middle;
 
     left = merge_sort(left);
     right = merge_sort(right);
 
 
     return merge(left, right);
+
+}
+
+LinkedList* merge_sort_list(LinkedList* list) {
+
+    if (!list) { return NULL; }
+
+    Node* head = list->head;
+
+    // Already sorted
+    if (!head) { return list; }
+
+    Node* sorted_head = merge_sort(head);
+
+    // Update the head
+    list->head = sorted_head;
+
+    // Retrieve the new tail
+    Node* node = sorted_head;
+    while (node->next != NULL) {
+
+        node = node->next;
+
+    }
+
+    list->tail = node;
+
+    return list;
 
 }

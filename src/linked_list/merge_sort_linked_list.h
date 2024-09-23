@@ -22,10 +22,25 @@ Node* split_list(Node* head);
 * @param1 The head Node of the first list.
 * @param2 The head Node of the second list.
 * @return The head Node of the merged list.
-* */
+*/
 Node* merge(Node* left, Node* right);
 
-
+/*
+* @brief Perform the merge sort algorithm on the next
+* reference chain strating from Node head.
+*
+* @param The head Node of the corresponding LinkedList
+* to be sorted.
+* @return The head Node of the sorted next reference chain.
+*/
 Node* merge_sort(Node* head);
+
+/*
+* @brief Given a LinkedList, perform the merge sort algorithm,
+*
+* @param The LinkedList to be sorted.
+* @return A pointer to the sorted LinkedList (same as argument input).
+*/
+LinkedList* merge_sort_list(LinkedList* list);
 
 #endif // MERGE_SORT_LINKED_LIST_H

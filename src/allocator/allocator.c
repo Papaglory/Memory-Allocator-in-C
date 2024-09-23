@@ -149,17 +149,6 @@ Node* create_metadata_node(char* memory_start, size_t block_size, bool is_free) 
 
     }
 
-    // Create Node containing the MemoryData
-    Node* node = (Node*) current_alloc->reserved_pool_border;
-
-    // Set Node member variables
-    node->data_size = sizeof(MemoryData);
-    node->next = NULL;
-    node->id = 0;
-
-    // Increase the reserved pool to accommodate for the Node
-    increase_reserved_pool(sizeof(Node));
-
     MemoryData* data = (MemoryData*) current_alloc->reserved_pool_border;
 
     // Set MemoryData member variables
@@ -171,8 +160,17 @@ Node* create_metadata_node(char* memory_start, size_t block_size, bool is_free) 
     // Increase the reserved pool to accommodate for the MemoryData
     increase_reserved_pool(sizeof(MemoryData));
 
-    // Assign the data to the Node
+    // Create Node containing the MemoryData
+    Node* node = (Node*) current_alloc->reserved_pool_border;
+
+    // Set Node member variables
+    node->data_size = sizeof(MemoryData);
+    node->next = NULL;
+    node->id = 0;
     node->data = (void*) data;
+
+    // Increase the reserved pool to accommodate for the Node
+    increase_reserved_pool(sizeof(Node));
 
     return node;
 
@@ -280,7 +278,7 @@ void cleanse_user_pool() {
 
         }
 
-        // Look for adjacent nodes
+        // Look for Nodes with adjacent memory blocks
         LinkedListIterator inner_iter;
         inner_iter.current = get_head(list);
 
@@ -377,13 +375,14 @@ void cleanse_reserved_pool() {
     // Memory location for the start of metadata Node traversal
     char* meta_data_node =
         current_alloc->heap_end
-        - current_alloc->initial_reserved_pool_size;
+        - current_alloc->initial_reserved_pool_size
+        - meta_data_node_size; // Need this because  we go backwards in memory
 
     // Iterate through the metadata Nodes
     while (meta_data_node > current_alloc->reserved_pool_border) {
 
         // Retrieve Node's corresponding MemoryData
-        MemoryData* data = (MemoryData*) (meta_data_node - sizeof(Node));
+        MemoryData* data = (MemoryData*) (meta_data_node + sizeof(Node));
 
         if (data->in_use == false) {
 
@@ -409,7 +408,7 @@ void cleanse_reserved_pool() {
 
             }
 
-            // Move the border Node to the vacant Node space
+            // Move the border metadata Node to the vacant space
             memcpy(meta_data_node, border_node, meta_data_node_size);
 
             // Update the reserved pool border
@@ -422,7 +421,7 @@ void cleanse_reserved_pool() {
                 new_pool_size -= meta_data_node_size;
 
                 Node* new_border_node = (Node*) current_alloc->reserved_pool_border;
-                MemoryData* new_border_data = (MemoryData*) border_node->data;
+                MemoryData* new_border_data = (MemoryData*) new_border_node->data;
 
                 // Check if the Node is in use
                 if (new_border_data->in_use == false) {
