@@ -5,6 +5,7 @@
 #include "../other_modules/memory_data.h"
 #include "../linked_list/node.h"
 #include "../linked_list/linked_list_iterator.h"
+#include "../linked_list/merge_sort_linked_list.h"
 
 /**
  * The Allocator currently referenced to when
@@ -230,34 +231,15 @@ void cleanse_user_pool() {
 
     }
 
-
-    /*
-     *
-     *
-     * Merge adjacent Nodes??
-     * Only merge nodes that are both free and adjacent.
-     * Move higher memory allocated blocks to lower memory if possible.
-     *
-     *
-     *
-     *
-     *
-     * TODO for improvements, implement merge sort for linked list.
-     * sort linked list: O(nlogn)
-     * merge adjacent nodes: O(n)
-     *
-     *
-     *
-     *
-     * For each node, go through the list and see if there is any
-     * nodes to merge with.
-     *
-     *
-     * k
-     */
-
     LinkedList* list = current_alloc->list;
 
+    merge_sort_list(list);
+
+    /*
+     * Go through the list and for each Node that
+     * has a free memory block, see if it is able to merge
+     * with the Node that is comes after in the LinkedList.
+    */
     LinkedListIterator iter;
     iter.current = get_head(list);
 
@@ -278,48 +260,55 @@ void cleanse_user_pool() {
 
         }
 
-        // Look for Nodes with adjacent memory blocks
-        LinkedListIterator inner_iter;
-        inner_iter.current = get_head(list);
+        Node* next_node = node->next;
 
-        while (has_next(&inner_iter)) {
+        if (!next_node) {
 
-            Node* inner_node = next(&inner_iter);
-            MemoryData* inner_data = inner_node->data;
+            // Have reached the end of the list
+            continue;
 
-            char* inner_memory_start = inner_data->memory_start;
-            char* inner_memory_end = inner_memory_start + inner_data->block_size;
+        }
 
-            size_t inner_id = inner_node->id;
+        MemoryData* next_data = (MemoryData*) node->data;
 
-            if (inner_data->is_free == false || id == inner_id) {
+        if (next_data->is_free == false) {
 
-                // Only interested in free and unique Nodes
-                continue;
+            /*
+             * The next Node does not have a free memory block,
+             * we can therefore skip the next Node.
+             */
+            next(&iter);
+            continue;
 
-            }
+        }
 
-            // Check if the inner Node is a right adjacent Node to merge with
-            if (memory_start == memory_end) {
-
-                merge_meta_data_nodes(list, node, inner_node);
-
-            }
-
-            // Check if the inner Node is a left adjacent Node to merge with
-            if (inner_memory_end == memory_start) {
-
-                merge_meta_data_nodes(list, inner_node, node);
-
-            }
-
-
-        } // End while
+        // We have found a Node to merge with!!
+        // Merge the next Node into this Node
+        merge_meta_data_nodes(list, node, next_node);
 
     } // End while
 
     // The Nodes have been merged. Now time to try and move them to lower memory
+    // The list is still sorted even though certain Nodes have been merged.
 
+
+    /*
+     * Reset the iterator and remove empty spaces in the managed
+     * heap by sliding each memory block corresponding to each
+     * metadata Node down to shrink the user pool.
+     */
+    iter.current = get_head(list);
+
+    while (has_next(&iter)) {
+
+
+        Node* node = next(&iter);
+        MemoryData* data = (MemoryData*) node->data;
+
+
+
+
+    }
 
 
 
