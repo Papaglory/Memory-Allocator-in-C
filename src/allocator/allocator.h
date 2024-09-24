@@ -144,6 +144,18 @@ void increase_reserved_pool(size_t increase);
 Node* create_metadata_node(char* memory_start, size_t block_size, bool is_free);
 
 /*
+* @brief Merge the two metadata Nodes into a single Node. The
+* left Node will remain while the right Node will be discarded.
+* Thereafter, the discarded Node is removed from the LinkedList.
+*
+* @param1 The LinkedList containing the Nodes.
+* @param2 The left Node.
+* @param3 The right Node.
+* @return A pointer to the merged Node (same address as 'left_node').
+*/
+Node* merge_meta_data_nodes(LinkedList* list, Node* left_node, Node* right_node);
+
+/*
 * @brief Clean the user pool by reducing memory fragment and
 * move the used memory to lower addresses in order to lower
 * the user pool border.

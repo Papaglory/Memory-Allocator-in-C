@@ -177,16 +177,6 @@ Node* create_metadata_node(char* memory_start, size_t block_size, bool is_free) 
 
 }
 
-/*
-* @brief Merge the two metadata Nodes into a single Node. The
-* left Node will remain while the right Node will be discarded.
-* Thereafter, the discarded Node is removed from the LinkedList.
-*
-* @param1 The LinkedList containing the Nodes.
-* @param2 The left Node.
-* @param3 The right Node.
-* @return A pointer to the merged Node (same address as 'left_node').
-*/
 Node* merge_meta_data_nodes(LinkedList* list, Node* left_node, Node* right_node) {
 
     if (list == NULL || left_node == NULL || right_node == NULL) {
@@ -223,7 +213,6 @@ Node* merge_meta_data_nodes(LinkedList* list, Node* left_node, Node* right_node)
 
 void cleanse_user_pool() {
 
-
     if (current_alloc == NULL) {
 
         // There is no Allocator to operate on
@@ -238,7 +227,7 @@ void cleanse_user_pool() {
     /*
      * Go through the list and for each Node that
      * has a free memory block, see if it is able to merge
-     * with the Node that is comes after in the LinkedList.
+     * with the Node that comes after in the LinkedList.
     */
     LinkedListIterator iter;
     iter.current = get_head(list);
@@ -250,8 +239,6 @@ void cleanse_user_pool() {
 
         char* memory_start = data->memory_start;
         char* memory_end = memory_start + data->block_size;
-
-        size_t id = node->id;
 
         if (data->is_free == false) {
 
@@ -269,28 +256,24 @@ void cleanse_user_pool() {
 
         }
 
-        MemoryData* next_data = (MemoryData*) node->data;
+        MemoryData* next_data = (MemoryData*) next_node->data;
 
         if (next_data->is_free == false) {
 
             /*
              * The next Node does not have a free memory block,
-             * we can therefore skip the next Node.
+             * nothing to merge with and we can also skip
+             * the next Node.
              */
             next(&iter);
             continue;
 
         }
 
-        // We have found a Node to merge with!!
-        // Merge the next Node into this Node
+        // We have a Node to merge with
         merge_meta_data_nodes(list, node, next_node);
 
     } // End while
-
-    // The Nodes have been merged. Now time to try and move them to lower memory
-    // The list is still sorted even though certain Nodes have been merged.
-
 
     /*
      * Reset the iterator and remove empty spaces in the managed
@@ -299,33 +282,29 @@ void cleanse_user_pool() {
      */
     iter.current = get_head(list);
 
-    while (has_next(&iter)) {
+    char* optimal_memory_start = current_alloc->heap_start;
 
+    while (has_next(&iter)) {
 
         Node* node = next(&iter);
         MemoryData* data = (MemoryData*) node->data;
 
+        if (data->memory_start != optimal_memory_start) {
 
+        // The memory block can be moved to a lower address
+        memcpy(optimal_memory_start, data->memory_start, data->block_size);
 
+        data->memory_start = optimal_memory_start;
+
+        }
+
+        /*
+         * The optimal memory start of the next Node is at the end
+         * of the memory block of the current Node.
+        */
+        optimal_memory_start += data->block_size;
 
     }
-
-
-
-    /*
-     *
-     * I could just move everything down, like slide down the whole thing?
-     * Every node will be moved at most once.
-     *
-     * Does the list need to be sorted then? Yes because I would always
-     * want to retrieve the memory block that is next.
-     *
-     *
-     *
-     *
-     */
-
-
 
 }
 
@@ -343,9 +322,9 @@ void cleanse_user_pool() {
  *
  * HIGH MEMORY
  *
- * Node
- *
  * MemoryData
+ *
+ * Node
  *
  * LOW MEMORY.
  */
