@@ -1,6 +1,7 @@
 #include <stdlib.h>
 #include <stddef.h>
 #include "linked_list_iterator.h"
+#include "../allocator/allocator.h"
 
 LinkedListIterator* create_iterator(LinkedList* list) {
 
@@ -12,7 +13,7 @@ LinkedListIterator* create_iterator(LinkedList* list) {
     }
 
     // Allocate iterator on the heap
-    LinkedListIterator* iter = (LinkedListIterator*) malloc(sizeof(LinkedListIterator));
+    LinkedListIterator* iter = (LinkedListIterator*) allocator_malloc(sizeof(LinkedListIterator));
     if (iter == NULL) {
 
         // Allocation failed
@@ -74,6 +75,6 @@ void destroy_iterator(LinkedListIterator* iter) {
 
     }
 
-    free(iter);
+    allocator_free(iter);
 
 }

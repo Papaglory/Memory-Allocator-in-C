@@ -47,7 +47,7 @@ int main() {
     // Create a corresponding iterator
     LinkedListIterator* iter = create_iterator(list);
 
-    while(has_next(iter)) {
+    while (has_next(iter)) {
 
         Node* node = next(iter);
 

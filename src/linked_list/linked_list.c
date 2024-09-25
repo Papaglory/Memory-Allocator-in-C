@@ -6,10 +6,11 @@
 #include "node.h"
 #include "linked_list_iterator.h"
 #include "../other_modules/constants.h"
+#include "../allocator/allocator.h"
 
 LinkedList* create_list() {
 
-    LinkedList* list = (LinkedList*) malloc(sizeof(LinkedList));
+    LinkedList* list = (LinkedList*) allocator_malloc(sizeof(LinkedList));
     if (list == NULL) {
 
         // Allocation failed
@@ -53,7 +54,7 @@ LinkedList* add(LinkedList* list, Node* node) {
         // Overwrite tail node
         list->tail = node;
 
-        // Insert new node
+        // Update next Node references
         tail_node->next = node;
         node->next = NULL;
 
@@ -112,7 +113,7 @@ LinkedList* delete_node(LinkedList* list, size_t id) {
     }
 
     // Search remaining part of list
-    while(current != NULL) {
+    while (current != NULL) {
 
         // Check if it is the Node to be removed
         if (current->id == id) {
@@ -157,12 +158,12 @@ size_t search_by_value(LinkedList* list, void* data, size_t data_size) {
 
     // Go through each Node and check if it matches
     LinkedListIterator* iter = create_iterator(list);
-    while(has_next(iter)) {
+    while (has_next(iter)) {
 
         Node* node = next(iter);
         if (node == NULL) {
 
-            free(iter);
+            destroy_iterator(iter);
             return NOT_FOUND;
 
         }
@@ -170,7 +171,7 @@ size_t search_by_value(LinkedList* list, void* data, size_t data_size) {
         // Compare the argument data to that of the Node
         if (data_size == node->data_size && memcmp(data, node->data, data_size) == 0) {
 
-            free(iter);
+            destroy_iterator(iter);
             return node->id;
 
         }
@@ -216,6 +217,6 @@ void destroy_list(LinkedList* list) {
     destroy_iterator(iter);
 
     // With all the node set free, it is safe to free list struct
-    free(list);
+    allocator_free(list);
 
 }
