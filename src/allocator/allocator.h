@@ -193,7 +193,18 @@ Node* naive_search(size_t size);
 */
 void allocator_free(void* ptr);
 
-// TODO Add comments
+/*
+* @brief Perform reallocation on the memory corresponding
+* to the input pointer 'ptr', assuming that the pointer
+* has been recieved using the allocator_malloc() function.
+*
+* @param1 The pointer pointing to the memory we want
+* to reallocate.
+* @param2 The desired size of the memory block when
+* reallocating.
+* @return A pointer to the memory address where the reallocated
+* memory block starts.
+*/
 void* allocator_realloc(void* ptr, size_t size);
 
 /*
