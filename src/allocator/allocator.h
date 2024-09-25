@@ -133,7 +133,7 @@ Allocator* create_allocator(size_t size);
 void increase_reserved_pool(size_t increase);
 
 /*
-* @brief Create a metadata Node stores data about the start of a
+* @brief Create a metadata Node and store data about the start of a
 * memory block, its size, and whether it is free or in use.
 *
 * @param1 A pointer to the start of the memory block.

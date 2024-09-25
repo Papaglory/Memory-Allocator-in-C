@@ -478,7 +478,13 @@ void* allocator_malloc(size_t required_size) {
     size_t residual_memory_size = node_block_size - required_size;
     bool is_free = false;
 
-    create_metadata_node(residual_memory_start, residual_memory_size, is_free);
+    Node* residual_node = create_metadata_node(
+        residual_memory_start,
+        residual_memory_size,
+        is_free
+    );
+
+    add(current_alloc->list, residual_node);
 
     // Return the pointer to the start of the allocated memory
     return data->memory_start;
@@ -629,15 +635,56 @@ void allocator_free(void* ptr) {
 
 }
 
+/*
+ * @brief Create a residual Node from the original input Node.
+ *
+ * @param1 The Node to use to create the residual Node.
+ * @param2 The desired memory block size of the residual Node.
+ * @return A pointer to the residual Node.
+ *
+ */
+Node* create_residual_node(Node* node, size_t residual_size) {
+
+    if (!node) { return NULL; }
+
+    MemoryData* data = (MemoryData*) node->data;
+
+    if (data->block_size <= residual_size) {
+
+        /*
+         * The size of the memory block of the residual Node has
+         * to be smaller than the block size of the original Node.
+         */
+        return NULL;
+
+    }
+
+    // Need to split up such that the residual memory is in a free node
+    char* residual_memory_start = data->memory_start + residual_size;
+    size_t residual_block_size = data->block_size - residual_size;
+    bool residual_is_free = true;
+
+    Node* residual_node = create_metadata_node(
+        residual_memory_start,
+        residual_block_size,
+        residual_is_free
+    );
+
+    // Remove the residual memory from the original Node
+    data->block_size = residual_size;
+
+    return residual_node;
+}
+
 void* allocator_realloc(void* ptr, size_t size) {
 
-    if (!current_alloc ||!ptr) { return NULL; }
+    if (!current_alloc || !ptr) { return NULL; }
 
     /*
      * Reallocating to a memory block of size 0
      * is the same as freeing the memory block.
      */
-    if (size == 0) { free(ptr); }
+    if (size == 0) { free(ptr); return NULL; }
 
     LinkedList* list = current_alloc->list;
     merge_sort_list(list);
@@ -645,13 +692,19 @@ void* allocator_realloc(void* ptr, size_t size) {
     LinkedListIterator iter;
     iter.current = list->head;
 
-    Node* ptr_node = NULL;
+    /*
+     * Have the left adjacent Node for potensially merging
+     * to aquire desired new memory block size.
+     */
+    Node* prev_node = NULL;
 
+    // Search for Node corresponding to argument pointer
+    Node* ptr_node = NULL;
     while (has_next(&iter)) {
 
+        prev_node = ptr_node;
 
         Node* node = next(&iter);
-
         MemoryData* data = node->data;
 
         if (ptr == (void*) data->memory_start) {
@@ -665,43 +718,178 @@ void* allocator_realloc(void* ptr, size_t size) {
 
     } // End while
 
+    // Check for corresponding pointer
+    if (!ptr_node) { return NULL; }
+
+    MemoryData* ptr_data = (MemoryData*) ptr_node->data;
+
+    if (size == ptr_data->block_size) {
+
+        /*
+         * The function call has requested a realloc
+         * where the memory block size remains the same.
+         */
+
+        return ptr;
+
+    } else if (size < ptr_data->block_size) {
+
+        /*
+         * The function call has requested a trimming
+         * of the memory block.
+         */
+
+        ptr_data->block_size = size;
+
+        // Create Node for the freed memory
+        char* freed_memory_start = ptr_data->memory_start + size;
+        size_t freed_block_size = ptr_data->block_size - size;
+        bool freed_is_free = true;
+
+        Node* freed_node = create_metadata_node(
+            freed_memory_start,
+            freed_block_size,
+            freed_is_free
+        );
+
+        add(list, freed_node);
+
+        return ptr;
+
+    }
 
     /*
-     *
-     * Check if the adjacent nodes are free.
-     *
-     * Check if merging block size of node to right is sufficient.
-     * If yes, merge.
-     *
-     * Check if merging block_size of node behind is sufficient.
-     * If yes, merge.
-     *
-     * Check if merging block_size of both adjacent nodes is sufficient.
-     * If yes, merge.
-     *
-     * Check if there are other memory blocks on the heap that can
-     * contain a memory block size of 'size'.
-     *
+     * The function call has requested an extension of the
+     * associated memory block.
      */
 
+    // Check if the adjacent Nodes are free
+    bool left_node_free = false;
+    bool right_node_free = false;
+    size_t left_node_size = 0;
+    size_t right_node_size = 0;
 
+    // Check if we can merge with the left adjacent Node
+    if (prev_node) {
+
+        MemoryData* prev_data = (MemoryData*) prev_node->data;
+
+        if (prev_data->is_free) {
+
+            // Merge the Nodes to have more space
+            left_node_free = true;
+            left_node_size = prev_data->block_size;
+
+        }
+
+    }
+
+    // Check if we can merge with the right adjacent Node
+    Node* next_node = ptr_node->next;
+    if (next_node) {
+
+        MemoryData* next_data = (MemoryData*) next_node->data;
+
+        if (next_data->is_free) {
+
+            // Merge the Nodes to have more space
+            right_node_free = true;
+            right_node_size = next_data->block_size;
+
+        }
+
+    }
 
     /*
-     *
-     * Sort the linked list.
-     *
-     *
-     * If
-     *
-     *
-     *
+     * Evaluate the adjacent Nodes and determine if
+     * the merging of the memory blocks is sufficient
+     * for the size as requested in the function argument.
      */
+    if (
+        right_node_free &&
+        ptr_data->block_size + right_node_size >= size
+    ) {
 
+        // Merging with the right Node is sufficient
+        Node* merged_node = merge_meta_data_nodes(list, ptr_node, next_node);
+        MemoryData* merged_data = (MemoryData*) merged_node->data;
 
+        // Need to split up such that the residual memory is in a free node
+        size_t residual_block_size = merged_data->block_size - size;
+        Node* residual_node = create_residual_node(merged_node, residual_block_size);
 
+        // Remove the residual memory from the merged Node
+        merged_data->block_size = size;
 
+        add(list, residual_node);
 
+        return merged_node;
 
+    } else if (
+        left_node_free &&
+        ptr_data->block_size + left_node_size >= size
+    ) {
+
+        // Merging with the left Node is sufficient
+        Node* merged_node = merge_meta_data_nodes(list, prev_node, ptr_node);
+        MemoryData* merged_data = (MemoryData*) merged_node->data;
+
+        // Need to split up such that the residual memory is in a free node
+        size_t residual_block_size = merged_data->block_size - size;
+        Node* residual_node = create_residual_node(merged_node, residual_block_size);
+
+        // Remove the residual memory from the merged Node
+        merged_data->block_size = size;
+
+        add(list, residual_node);
+
+        return merged_node;
+
+    } else if (
+        left_node_free &&
+        right_node_free &&
+        ptr_data->block_size + left_node_size + right_node_size >= size
+    ) {
+
+        // Merging with both the Nodes is sufficient
+        Node* merged_node = merge_meta_data_nodes(list, ptr_node, next_node);
+        merged_node = merge_meta_data_nodes(list, prev_node, merged_node);
+
+        MemoryData* merged_data = (MemoryData*) merged_node->data;
+
+        // Need to split up such that the residual memory is in a free node
+        size_t residual_block_size = merged_data->block_size - size;
+        Node* residual_node = create_residual_node(merged_node, residual_block_size);
+
+        add(list, residual_node);
+
+        return merged_node;
+
+    } else {
+
+        /*
+         * Merging with the adjacent Nodes are either
+         * not possible or not sufficient. Thus, we
+         * need to look for a new location on the
+         * managed heap.
+         */
+
+        void* new_location = allocator_malloc(size);
+
+        /*
+        * Copy the memory data from the original and place it
+        * in the new location.
+        */
+        memcpy(new_location, ptr_data->memory_start, ptr_data->block_size);
+
+        // Free the original Node as it is no longer in use
+        allocator_free(ptr);
+
+        return new_location;
+
+    }
+
+    // Reallocation was not possible
 
     return NULL;
 
