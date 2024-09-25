@@ -194,7 +194,7 @@ Node* naive_search(size_t size);
 void allocator_free(void* ptr);
 
 // TODO Add comments
-void* allocator_realloc(size_t size);
+void* allocator_realloc(void* ptr, size_t size);
 
 /*
 * $brief Destory the Allocator pointed to by 'current_alloc' and its

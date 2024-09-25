@@ -568,7 +568,10 @@ void allocator_free(void* ptr) {
 
         if (node->id == list->tail->id) {
 
-            // End of list and there is no corresponding Node
+            /*
+             * End of list and there is no corresponding Node,
+             * the Allocator has not given out this pointer.
+             */
             return;
 
         }
@@ -579,8 +582,7 @@ void allocator_free(void* ptr) {
 
     MemoryData* matched_data = (MemoryData*) matched_node->data;
 
-
-    // Reset the iterator and look for adjacent Nodes
+    // Reset the iterator and look for adjacent Nodes to merge with
     iter.current = get_head(list);
 
     char* matched_memory_start = matched_data->memory_start;
@@ -624,6 +626,84 @@ void allocator_free(void* ptr) {
         matched_data->is_free = true;
 
     }
+
+}
+
+void* allocator_realloc(void* ptr, size_t size) {
+
+    if (!current_alloc ||!ptr) { return NULL; }
+
+    /*
+     * Reallocating to a memory block of size 0
+     * is the same as freeing the memory block.
+     */
+    if (size == 0) { free(ptr); }
+
+    LinkedList* list = current_alloc->list;
+    merge_sort_list(list);
+
+    LinkedListIterator iter;
+    iter.current = list->head;
+
+    Node* ptr_node = NULL;
+
+    while (has_next(&iter)) {
+
+
+        Node* node = next(&iter);
+
+        MemoryData* data = node->data;
+
+        if (ptr == (void*) data->memory_start) {
+
+            // corresponding Node has been found
+            ptr_node = node;
+
+            break;
+
+        }
+
+    } // End while
+
+
+    /*
+     *
+     * Check if the adjacent nodes are free.
+     *
+     * Check if merging block size of node to right is sufficient.
+     * If yes, merge.
+     *
+     * Check if merging block_size of node behind is sufficient.
+     * If yes, merge.
+     *
+     * Check if merging block_size of both adjacent nodes is sufficient.
+     * If yes, merge.
+     *
+     * Check if there are other memory blocks on the heap that can
+     * contain a memory block size of 'size'.
+     *
+     */
+
+
+
+    /*
+     *
+     * Sort the linked list.
+     *
+     *
+     * If
+     *
+     *
+     *
+     */
+
+
+
+
+
+
+
+    return NULL;
 
 }
 
