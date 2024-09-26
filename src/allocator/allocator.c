@@ -7,6 +7,8 @@
 #include "../linked_list/linked_list_iterator.h"
 #include "../linked_list/merge_sort_linked_list.h"
 
+#include <stdio.h>
+
 /**
  * The Allocator currently referenced to when
  * using the Allocator functions.
@@ -58,7 +60,11 @@ Allocator* create_allocator(size_t heap_size) {
     /*
      * Set the Allocator being used to let Allocator functions
      * know which Allocator object to process.
+     *
+     * Also, store the current Allocator during the
+     * creation of this new Allocator.
      */
+    Allocator* stored_alloc = current_alloc;
     set_allocator(alloc);
 
     // Initialize LinkedList object
@@ -94,6 +100,9 @@ Allocator* create_allocator(size_t heap_size) {
     Node* node = create_metadata_node(memory_start, block_size, is_free);
 
     add(list, node);
+
+    // Set the Allocator back to the one before this new Allocator
+    set_allocator(stored_alloc);
 
     return alloc;
 }
@@ -149,6 +158,19 @@ Node* create_metadata_node(char* memory_start, size_t block_size, bool is_free) 
         return NULL;
 
     }
+
+    /*
+     * TODO. Should I first increase the reserved pool,
+     * then insert my memorydata? I think that makes sense
+     * as of right now, I am going to the border,
+     * from the border inserting my data,
+     * then increasing the border.
+     *
+     * It makes more sense that I increase the border
+     * to get away from the data that already was at
+     * the border, and then insert my memory data.
+     *
+     */
 
     MemoryData* data = (MemoryData*) current_alloc->reserved_pool_border;
 
@@ -236,9 +258,6 @@ void cleanse_user_pool() {
 
         Node* node = next(&iter);
         MemoryData* data = node->data;
-
-        char* memory_start = data->memory_start;
-        char* memory_end = memory_start + data->block_size;
 
         if (data->is_free == false) {
 
@@ -558,7 +577,7 @@ void allocator_free(void* ptr) {
     }
 
     // Search for the Node corresponding to 'ptr' in the LinkedList
-    Node* matched_node;
+    Node* matched_node = NULL;
     while (has_next(&iter)) {
 
         Node* node = next(&iter);
@@ -572,25 +591,27 @@ void allocator_free(void* ptr) {
 
         }
 
-        if (node->id == list->tail->id) {
-
-            /*
-             * End of list and there is no corresponding Node,
-             * the Allocator has not given out this pointer.
-             */
-            return;
-
-        }
-
         node = node->next;
 
     }
 
-    MemoryData* matched_data = (MemoryData*) matched_node->data;
+    if (!matched_node) {
 
-    // Reset the iterator and look for adjacent Nodes to merge with
+       /*
+        * The corresponding Node was not found.
+        * the Allocator has not given out this pointer.
+        */
+        return;
+
+    }
+
+    /*
+     * Reset the iterator and see if the newly freed Node
+     * has adjacent free Nodes that it can merge with.
+     */
     iter.current = get_head(list);
 
+    MemoryData* matched_data = (MemoryData*) matched_node->data;
     char* matched_memory_start = matched_data->memory_start;
     char* matched_memory_end = matched_memory_start + matched_data->block_size;
 
@@ -601,9 +622,7 @@ void allocator_free(void* ptr) {
         MemoryData* data = node->data;
 
         char* memory_start = data->memory_start;
-        char* memory_end =
-            memory_start
-            + data->block_size;
+        char* memory_end = memory_start + data->block_size;
 
         // Check if there is a right adjacent Node to merge with
         if (memory_start == matched_memory_end) {
