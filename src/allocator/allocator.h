@@ -81,18 +81,11 @@ typedef struct {
     char* heap_end;
 
     /*
-     * Points to the upper border of the user pool that
-     * is in use.
-     */
-    char* user_pool_border;
-
-    /*
      * Pointer to the lower border of the reserved pool.
      * As the reserved pool grows downwards, this is where
      * new metadata will be inserted.
      */
     char* reserved_pool_border;
-
 
     /*
      * The least amount of memory needed to initialize
@@ -231,5 +224,10 @@ void set_allocator(Allocator* alloc);
 * @param The Allocator to be released.
 */
 void release_allocator();
+
+
+
+Node* create_residual_node(Node* node, size_t residual_size);
+
 
 #endif

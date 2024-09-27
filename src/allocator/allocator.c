@@ -7,6 +7,8 @@
 #include "../linked_list/linked_list_iterator.h"
 #include "../linked_list/merge_sort_linked_list.h"
 
+#include <stdio.h>
+
 /**
  * The Allocator currently referenced to when
  * using the Allocator functions.
@@ -43,23 +45,31 @@ Allocator* create_allocator(size_t heap_size) {
     // Pointer to the end of the heap
     char* heap_end = heap_start + heap_size;
 
-    // Initialize Allocator object at the end of heap
-    Allocator* alloc = (Allocator*) heap_end;
+    // Initialize Allocator object at the end of the heap
+    Allocator* alloc = (Allocator*) (heap_end - sizeof(Allocator));
 
     // Set Allocator member variables
     alloc->heap_start = heap_start;
     alloc->heap_end = heap_end;
-    alloc->user_pool_border = heap_start;
-    alloc->initial_reserved_pool_size = initial_reserved_pool_size;
     alloc->reserved_pool_border =  heap_end - sizeof(Allocator);
+    alloc->initial_reserved_pool_size = initial_reserved_pool_size;
     alloc->heap_size = heap_size;
     alloc->reserved_pool_size = sizeof(Allocator);
 
     /*
      * Set the Allocator being used to let Allocator functions
      * know which Allocator object to process.
+     *
+     * Also, store the current Allocator during the
+     * creation of this new Allocator to be able to set it
+     * back at the end of this function.
      */
+    Allocator* stored_alloc = current_alloc;
     set_allocator(alloc);
+
+    // Increase the reserved pool to accommodate for the LinkedList
+    alloc->reserved_pool_border -= sizeof(LinkedList);
+    alloc->reserved_pool_size += sizeof(LinkedList);
 
     // Initialize LinkedList object
     LinkedList* list = (LinkedList*) alloc->reserved_pool_border;
@@ -70,32 +80,245 @@ Allocator* create_allocator(size_t heap_size) {
     list->size = 0;
     list->next_id = 0;
 
-    // Increase the reserved pool to accommodate for the LinkedList
-    increase_reserved_pool(sizeof(LinkedList));
-
     // Set Allocator member variable
     alloc->list = list;
 
     // Initialize a Node referencing the entire user memory pool
     void* memory_start = heap_start;
+
+    // Increase the reserved pool to accommodate for the MemoryData
+    increase_reserved_pool(sizeof(MemoryData));
+
+    MemoryData* data = (MemoryData*) alloc->reserved_pool_border;
+
     /*
+    * Set MemoryData member variables.
+    *
     * In determining the size of the initial user pool we also account
     * for the Node which will be created and stored in the reserved pool.
-    * Note that the payload of Node is a MemoryData object.
-    * Therefore, we subtract the size of Node and MemoryData from
-    * the initial user pool.
+    * Therefore, we subtract the size of Node in the initial user pool.
     */
     size_t block_size =
         heap_size
         - alloc->reserved_pool_size
-        - sizeof(Node)
-        - sizeof(MemoryData);
+        - sizeof(Node);
     bool is_free = true;
-    Node* node = create_metadata_node(memory_start, block_size, is_free);
+    data->memory_start = memory_start;
+    data->block_size = block_size;
+    data->is_free = is_free;
+    data->in_use = true;
+
+    // Increase the reserved pool to accommodate for the Node
+    increase_reserved_pool(sizeof(Node));
+
+    // Create Node containing the MemoryData
+    Node* node = (Node*) alloc->reserved_pool_border;
+
+    // Set Node member variables
+    node->data_size = sizeof(MemoryData);
+    node->next = NULL;
+    node->id = 0;
+    node->data = (void*) data;
 
     add(list, node);
 
+    // Set the Allocator back to the one before this new Allocator
+    set_allocator(stored_alloc);
+
     return alloc;
+}
+
+
+
+void print_list_stats2(LinkedList* list) {
+
+    if (!list) { return; }
+
+    printf("\n%s\n", "FUNCTION CALL: print_list_stats2");
+
+    int align_size = 16;
+
+    printf("%-*s%zu\n", align_size, "list size: ", list->size);
+
+    int indent_size = 8;
+
+    LinkedListIterator iter;
+    iter.current = list->head;
+
+    printf("%s\n", "Nodes:");
+
+    while (has_next(&iter)) {
+
+        Node* node = next(&iter);
+        MemoryData* data = node->data;
+
+        if (!data) {
+            printf("NO DATA");
+            fflush(stdout);
+        }
+
+        // Printing Node id
+        printf(
+            "%*s%-*s%zu\n",
+            indent_size,
+            "",
+            align_size,
+            "ID:",
+            node->id
+        );
+
+        // Printing in_use with true/false text
+        printf(
+            "%*s%-*s%s\n",
+            indent_size,
+            "",
+            align_size,
+            "in_use:",
+            data->in_use ? "true" : "false"
+        );
+
+        // Printing is_free with true/false text
+        printf(
+            "%*s%-*s%s\n",
+            indent_size,
+            "",
+            align_size,
+            "is_free:",
+            data->is_free ? "true" : "false"
+        );
+
+        // Printing block_size
+        printf(
+            "%*s%-*s%zu\n",
+            indent_size,
+            "",
+            align_size,
+            "block_size:",
+            data->block_size
+        );
+
+        // Printing memory_start
+        printf(
+            "%*s%-*s%p\n",
+            indent_size,
+            "",
+            align_size,
+            "memory_start:",
+            data->memory_start
+        );
+
+        printf("\n");
+
+    }
+
+}
+
+char* retrieve_user_pool_border() {
+
+    if (!current_alloc) { return NULL; }
+
+    LinkedList* list = current_alloc->list;
+    merge_sort_list(list);
+
+    Node* found_node = NULL;
+    LinkedListIterator iter;
+    iter.current = list->head;
+
+    while (has_next(&iter)) {
+
+        Node* node = next(&iter);
+        MemoryData* data = (MemoryData*) node->data;
+
+        if (data->is_free == false) {
+
+            found_node = node;
+
+        }
+
+    }
+
+    if (!found_node) {
+
+        /*
+         * No free Node was found. This means that
+         * the heap is completely free.
+         */
+        return NULL;
+
+    }
+
+    MemoryData* found_data = (MemoryData*) found_node->data;
+
+    // Retrieve the memory pool borders
+    char* user_border = found_data->memory_start + found_data->block_size;
+
+    return user_border;
+
+}
+
+
+/*
+ * @brief Determines if the user pool and reserved pool will
+ * overlap if we increase one of the borders by 'increase'.
+ *
+ * @note Since the pools are dual of each other, it does not
+ * matter if we choose to increase the user pool or the
+ * reserved pool. If an overlap happens, it will happen
+ * regardless of the pool we choose to increase.
+ *
+ * @param The amount in bytes that we want to increase a pool.
+ * @return Whether the pools overlap or not.
+ */
+bool pool_overlap(size_t increase) {
+
+    if (!current_alloc) { return false; }
+
+    LinkedList* list = current_alloc->list;
+
+    if (list->size == 0) {
+
+        /*
+         * The list is empty, thus there can be no overlap.
+         */
+
+        return false;
+
+    }
+
+    // Retrieve the memory pool borders
+    char* user_border = retrieve_user_pool_border();
+    char* reserved_border = current_alloc->reserved_pool_border;
+
+    /*
+     * Check if the pools overlap if we increase one of the pools.
+     * Note that the choice of pool to increase is arbitrary as
+     * they are the dual of each other.
+     */
+    if (user_border + increase > reserved_border) {
+
+        /*
+         * The pool borders have reached each other.
+         * Attempt to reduce memory fragmentation in each pool.
+         */
+        cleanse_user_pool();
+        cleanse_reserved_pool();
+
+        // Retrieve the cleansed memory pool borders
+        user_border = retrieve_user_pool_border();
+        reserved_border = current_alloc->reserved_pool_border;
+
+        // Check if pool cleansing prevents pool overlap
+        if (user_border + increase > reserved_border) {
+
+            // Cleaning up the pools did not work, heap is considered full
+            return true;
+
+        }
+
+    }
+
+    return false;
+
 }
 
 void increase_reserved_pool(size_t increase) {
@@ -107,31 +330,12 @@ void increase_reserved_pool(size_t increase) {
 
     }
 
-    // Retrieve the memory pool borders
-    char* user_border = current_alloc->user_pool_border;
-    char* reserved_border = current_alloc->reserved_pool_border;
+    if (pool_overlap(increase) == true) {
 
-    // Check if pools overlap if we increase the reserved pool
-    if (user_border > reserved_border - increase) {
-
-        /*
-         * The user pool border has reached the reserved pool border.
-         * Attempt to reduce memory fragmentation in each pool.
-         */
-        cleanse_user_pool();
-        cleanse_reserved_pool();
-
-        // Retrieve the cleansed memory pool borders
-        user_border = current_alloc->user_pool_border;
-        reserved_border = current_alloc->reserved_pool_border;
-
-        // Check if pool cleansing prevents pool overlap
-        if (user_border > reserved_border - increase) {
-
-            // Cleaning up the pools did not work, heap is considered full
-            return;
-
-        }
+        // There is an overlap, the heap is considered full
+        printf("there is a pool overlap\n");
+        fflush(stdout);
+        return;
 
     }
 
@@ -150,6 +354,19 @@ Node* create_metadata_node(char* memory_start, size_t block_size, bool is_free) 
 
     }
 
+    char* before = current_alloc->reserved_pool_border;
+
+    // Increase the reserved pool to accommodate for the MemoryData
+    increase_reserved_pool(sizeof(MemoryData));
+
+    if (before == current_alloc->reserved_pool_border) {
+
+
+        printf("SAME\n");
+        fflush(stdout);
+
+    }
+
     MemoryData* data = (MemoryData*) current_alloc->reserved_pool_border;
 
     // Set MemoryData member variables
@@ -158,8 +375,8 @@ Node* create_metadata_node(char* memory_start, size_t block_size, bool is_free) 
     data->is_free = is_free;
     data->in_use = true;
 
-    // Increase the reserved pool to accommodate for the MemoryData
-    increase_reserved_pool(sizeof(MemoryData));
+    // Increase the reserved pool to accommodate for the Node
+    increase_reserved_pool(sizeof(Node));
 
     // Create Node containing the MemoryData
     Node* node = (Node*) current_alloc->reserved_pool_border;
@@ -169,9 +386,6 @@ Node* create_metadata_node(char* memory_start, size_t block_size, bool is_free) 
     node->next = NULL;
     node->id = 0;
     node->data = (void*) data;
-
-    // Increase the reserved pool to accommodate for the Node
-    increase_reserved_pool(sizeof(Node));
 
     return node;
 
@@ -237,9 +451,6 @@ void cleanse_user_pool() {
         Node* node = next(&iter);
         MemoryData* data = node->data;
 
-        char* memory_start = data->memory_start;
-        char* memory_end = memory_start + data->block_size;
-
         if (data->is_free == false) {
 
             // Only Nodes with free memory blocks can be merged
@@ -291,10 +502,14 @@ void cleanse_user_pool() {
 
         if (data->memory_start != optimal_memory_start) {
 
-        // The memory block can be moved to a lower address
-        memcpy(optimal_memory_start, data->memory_start, data->block_size);
+            // The memory block can be moved to a lower address
+            memcpy(
+                optimal_memory_start,
+                data->memory_start,
+                data->block_size
+            );
 
-        data->memory_start = optimal_memory_start;
+            data->memory_start = optimal_memory_start;
 
         }
 
@@ -414,6 +629,50 @@ void cleanse_reserved_pool() {
 
 }
 
+/*
+ * @brief Create a residual Node from the original input Node
+ * and update the original Node by discarding the memory block
+ * now given to the residual Node.
+ *
+ * @param1 The Node to use to create the residual Node.
+ * @param2 The desired memory block size of the residual Node.
+ * @return A pointer to the residual Node.
+ */
+Node* create_residual_node(Node* node, size_t residual_size) {
+
+    if (!node) { return NULL; }
+
+    MemoryData* data = (MemoryData*) node->data;
+
+    if (data->block_size <= residual_size) {
+
+        /*
+         * The size of the memory block of the residual Node has
+         * to be smaller than the block size of the original Node.
+         */
+        return NULL;
+
+    }
+
+    // Need to split up such that the residual memory is in a free Node
+    char* residual_memory_start =
+        data->memory_start
+        + data->block_size
+        - residual_size;
+    bool residual_is_free = true;
+
+    Node* residual_node = create_metadata_node(
+        residual_memory_start,
+        residual_size,
+        residual_is_free
+    );
+
+    // Change the original block size to carry the allocated memory block
+    data->block_size -= residual_size;
+
+    return residual_node;
+}
+
 void* allocator_malloc(size_t required_size) {
 
     if (current_alloc == NULL) {
@@ -469,22 +728,14 @@ void* allocator_malloc(size_t required_size) {
 
     }
 
-    // Modify 'available_node' to reflect that it is in use
-    data->block_size = required_size;
-    data->is_free = false;
-
     // Construct the residual metadata Node
-    char* residual_memory_start = data->memory_start + required_size;
     size_t residual_memory_size = node_block_size - required_size;
-    bool is_free = false;
-
-    Node* residual_node = create_metadata_node(
-        residual_memory_start,
-        residual_memory_size,
-        is_free
-    );
+    Node* residual_node = create_residual_node(available_node, residual_memory_size);
 
     add(current_alloc->list, residual_node);
+
+    // Modify 'available_node' to reflect that it is now in use
+    data->is_free = false;
 
     // Return the pointer to the start of the allocated memory
     return data->memory_start;
@@ -558,7 +809,7 @@ void allocator_free(void* ptr) {
     }
 
     // Search for the Node corresponding to 'ptr' in the LinkedList
-    Node* matched_node;
+    Node* matched_node = NULL;
     while (has_next(&iter)) {
 
         Node* node = next(&iter);
@@ -572,25 +823,27 @@ void allocator_free(void* ptr) {
 
         }
 
-        if (node->id == list->tail->id) {
-
-            /*
-             * End of list and there is no corresponding Node,
-             * the Allocator has not given out this pointer.
-             */
-            return;
-
-        }
-
         node = node->next;
 
     }
 
-    MemoryData* matched_data = (MemoryData*) matched_node->data;
+    if (!matched_node) {
 
-    // Reset the iterator and look for adjacent Nodes to merge with
+       /*
+        * The corresponding Node was not found.
+        * the Allocator has not given out this pointer.
+        */
+        return;
+
+    }
+
+    /*
+     * Reset the iterator and see if the newly freed Node
+     * has adjacent free Nodes that it can merge with.
+     */
     iter.current = get_head(list);
 
+    MemoryData* matched_data = (MemoryData*) matched_node->data;
     char* matched_memory_start = matched_data->memory_start;
     char* matched_memory_end = matched_memory_start + matched_data->block_size;
 
@@ -601,9 +854,7 @@ void allocator_free(void* ptr) {
         MemoryData* data = node->data;
 
         char* memory_start = data->memory_start;
-        char* memory_end =
-            memory_start
-            + data->block_size;
+        char* memory_end = memory_start + data->block_size;
 
         // Check if there is a right adjacent Node to merge with
         if (memory_start == matched_memory_end) {
@@ -635,47 +886,6 @@ void allocator_free(void* ptr) {
 
 }
 
-/*
- * @brief Create a residual Node from the original input Node.
- *
- * @param1 The Node to use to create the residual Node.
- * @param2 The desired memory block size of the residual Node.
- * @return A pointer to the residual Node.
- *
- */
-Node* create_residual_node(Node* node, size_t residual_size) {
-
-    if (!node) { return NULL; }
-
-    MemoryData* data = (MemoryData*) node->data;
-
-    if (data->block_size <= residual_size) {
-
-        /*
-         * The size of the memory block of the residual Node has
-         * to be smaller than the block size of the original Node.
-         */
-        return NULL;
-
-    }
-
-    // Need to split up such that the residual memory is in a free node
-    char* residual_memory_start = data->memory_start + residual_size;
-    size_t residual_block_size = data->block_size - residual_size;
-    bool residual_is_free = true;
-
-    Node* residual_node = create_metadata_node(
-        residual_memory_start,
-        residual_block_size,
-        residual_is_free
-    );
-
-    // Remove the residual memory from the original Node
-    data->block_size = residual_size;
-
-    return residual_node;
-}
-
 void* allocator_realloc(void* ptr, size_t size) {
 
     if (!current_alloc || !ptr) { return NULL; }
@@ -694,7 +904,8 @@ void* allocator_realloc(void* ptr, size_t size) {
 
     /*
      * Have the left adjacent Node for potensially merging
-     * to aquire desired new memory block size.
+     * to aquire desired new memory block size later in the
+     * function.
      */
     Node* prev_node = NULL;
 
@@ -818,9 +1029,6 @@ void* allocator_realloc(void* ptr, size_t size) {
         size_t residual_block_size = merged_data->block_size - size;
         Node* residual_node = create_residual_node(merged_node, residual_block_size);
 
-        // Remove the residual memory from the merged Node
-        merged_data->block_size = size;
-
         add(list, residual_node);
 
         return merged_node;
@@ -837,9 +1045,6 @@ void* allocator_realloc(void* ptr, size_t size) {
         // Need to split up such that the residual memory is in a free node
         size_t residual_block_size = merged_data->block_size - size;
         Node* residual_node = create_residual_node(merged_node, residual_block_size);
-
-        // Remove the residual memory from the merged Node
-        merged_data->block_size = size;
 
         add(list, residual_node);
 
