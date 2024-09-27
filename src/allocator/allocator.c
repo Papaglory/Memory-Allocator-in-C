@@ -213,9 +213,6 @@ Node* create_metadata_node(char* memory_start, size_t block_size, bool is_free) 
     // Increase the reserved pool to accommodate for the MemoryData
     increase_reserved_pool(sizeof(MemoryData));
 
-    // Increase the user pool to accommodate for the memory block
-    increase_user_pool(block_size);
-
     MemoryData* data = (MemoryData*) current_alloc->reserved_pool_border;
 
     // Set MemoryData member variables
@@ -591,6 +588,9 @@ void* allocator_malloc(size_t required_size) {
     // Modify 'available_node' to reflect that it is now in use
     data->is_free = false;
 
+    // Increase the user pool to accommodate for the memory block
+    increase_user_pool(required_size);
+
     // Return the pointer to the start of the allocated memory
     return data->memory_start;
 
@@ -758,7 +758,8 @@ void* allocator_realloc(void* ptr, size_t size) {
 
     /*
      * Have the left adjacent Node for potensially merging
-     * to aquire desired new memory block size.
+     * to aquire desired new memory block size later in the
+     * function.
      */
     Node* prev_node = NULL;
 
