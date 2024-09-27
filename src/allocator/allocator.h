@@ -81,8 +81,10 @@ typedef struct {
     char* heap_end;
 
     /*
-     * Points to the upper border of the user pool that
-     * is in use.
+     * A pointer to the user pool border. The user pool border
+     * indicates the end of the currently highest allocated memory
+     * block within the managed heap, representing the highest
+     * memory address used for user allocations.
      */
     char* user_pool_border;
 
