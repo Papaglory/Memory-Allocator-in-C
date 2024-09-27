@@ -19,7 +19,6 @@ void print_allocator_stats(Allocator* alloc) {
 
     printf("%-*s%p\n", align_size, "heap_start:", alloc->heap_start);
     printf("%-*s%p\n", align_size, "heap_end:", alloc->heap_end);
-    printf("%-*s%p\n", align_size, "user_pool_border:", alloc->user_pool_border);
     printf("%-*s%p\n", align_size, "reserved_pool_border:", alloc->reserved_pool_border);
     printf("%-*s%zu\n", align_size, "initial_reserved_pool_size:", alloc->initial_reserved_pool_size);
     printf("%-*s%zu\n", align_size, "heap_size:", alloc->heap_size);
@@ -50,6 +49,11 @@ void print_list_stats(LinkedList* list) {
 
         Node* node = next(&iter);
         MemoryData* data = node->data;
+
+        if (!data) {
+            printf("NO DATA");
+            fflush(stdout);
+        }
 
         // Printing Node id
         printf(
@@ -119,6 +123,14 @@ void creation_test() {
     LinkedList* list = alloc->list;
     print_list_stats(list);
 
+    printf("Calling create residual node\n");
+    fflush(stdout);
+    Node* residual_node = create_residual_node(list->head, 10);
+
+    add(list, residual_node);
+
+    print_list_stats(list);
+
     destroy_allocator();
 
 }
@@ -144,16 +156,55 @@ void malloc_test() {
 
 }
 
+void residual_node_test() {
+
+    Allocator* alloc = create_allocator(800);
+    set_allocator(alloc);
+
+    Node* node = malloc(sizeof(Node));
+
+    MemoryData* data = malloc(sizeof(MemoryData));
+
+    node->data = (void*) data;
+    node->id = 0;
+    node->next = NULL;
+    node->data_size = sizeof(MemoryData);
+
+
+    data->in_use = true;
+    data->is_free = true;
+    data->memory_start = (char*) 8;
+    data->block_size = 12;
+
+    LinkedList list;
+
+    add(&list, node);
+
+    size_t residual_size = 10;
+
+    printf("HERE\n");
+    fflush(stdout);
+
+    Node* residual_node = create_residual_node(node, residual_size);
+
+    printf("%p\n", node);
+    printf("%p\n", residual_node);
+
+    add(&list, residual_node);
+
+    print_list_stats(&list);
+}
+
 int main() {
 
     // Seed the random number generator
     srand(time(NULL));
 
     printf("\n%s\n", "----TEST STARTED----");
-
+    //residual_node_test();
     creation_test();
 
-    malloc_test();
+    //malloc_test();
 
 
     printf("\n%s\n", "----TEST ENDED----");

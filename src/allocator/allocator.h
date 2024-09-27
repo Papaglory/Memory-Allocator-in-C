@@ -81,14 +81,6 @@ typedef struct {
     char* heap_end;
 
     /*
-     * A pointer to the user pool border. The user pool border
-     * indicates the end of the currently highest allocated memory
-     * block within the managed heap, representing the highest
-     * memory address used for user allocations.
-     */
-    char* user_pool_border;
-
-    /*
      * Pointer to the lower border of the reserved pool.
      * As the reserved pool grows downwards, this is where
      * new metadata will be inserted.
@@ -122,9 +114,6 @@ typedef struct {
 * @return Returns a pointer to the created Allocator.
 */
 Allocator* create_allocator(size_t size);
-
-
-void increase_user_pool(size_t increase);
 
 /*
 * @brief Increase the reserved pool of the Allocator pointed to
@@ -235,5 +224,10 @@ void set_allocator(Allocator* alloc);
 * @param The Allocator to be released.
 */
 void release_allocator();
+
+
+
+Node* create_residual_node(Node* node, size_t residual_size);
+
 
 #endif
