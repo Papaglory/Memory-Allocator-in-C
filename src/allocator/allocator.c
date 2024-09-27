@@ -45,15 +45,15 @@ Allocator* create_allocator(size_t heap_size) {
     // Pointer to the end of the heap
     char* heap_end = heap_start + heap_size;
 
-    // Initialize Allocator object at the end of heap
-    Allocator* alloc = (Allocator*) heap_end;
+    // Initialize Allocator object at the end of the heap
+    Allocator* alloc = (Allocator*) (heap_end - sizeof(Allocator));
 
     // Set Allocator member variables
     alloc->heap_start = heap_start;
     alloc->heap_end = heap_end;
     alloc->user_pool_border = heap_start;
-    alloc->initial_reserved_pool_size = initial_reserved_pool_size;
     alloc->reserved_pool_border =  heap_end - sizeof(Allocator);
+    alloc->initial_reserved_pool_size = initial_reserved_pool_size;
     alloc->heap_size = heap_size;
     alloc->reserved_pool_size = sizeof(Allocator);
 
@@ -62,10 +62,14 @@ Allocator* create_allocator(size_t heap_size) {
      * know which Allocator object to process.
      *
      * Also, store the current Allocator during the
-     * creation of this new Allocator.
+     * creation of this new Allocator to be able to set it
+     * back at the end of this function.
      */
     Allocator* stored_alloc = current_alloc;
     set_allocator(alloc);
+
+    // Increase the reserved pool to accommodate for the LinkedList
+    increase_reserved_pool(sizeof(LinkedList));
 
     // Initialize LinkedList object
     LinkedList* list = (LinkedList*) alloc->reserved_pool_border;
@@ -75,9 +79,6 @@ Allocator* create_allocator(size_t heap_size) {
     list->tail = NULL;
     list->size = 0;
     list->next_id = 0;
-
-    // Increase the reserved pool to accommodate for the LinkedList
-    increase_reserved_pool(sizeof(LinkedList));
 
     // Set Allocator member variable
     alloc->list = list;
@@ -107,24 +108,33 @@ Allocator* create_allocator(size_t heap_size) {
     return alloc;
 }
 
-void increase_reserved_pool(size_t increase) {
-
-    if (current_alloc == NULL) {
-
-        // There is no Allocator to operate on
-        return;
-
-    }
+/*
+ * @brief Determines if the user pool and reserved pool will
+ * overlap if we increase one of the borders by 'increase'.
+ *
+ * @note Since the pools are dual of each other, it does not
+ * matter if we choose to increase the user pool or the
+ * reserved pool. If an overlap happens, it will happen
+ * regardless of the pool we choose to increase.
+ *
+ * @param The amount in bytes that we want to increase a pool.
+ * @return Whether the pools overlap or not.
+ */
+bool pool_overlap(size_t increase) {
 
     // Retrieve the memory pool borders
     char* user_border = current_alloc->user_pool_border;
     char* reserved_border = current_alloc->reserved_pool_border;
 
-    // Check if pools overlap if we increase the reserved pool
-    if (user_border > reserved_border - increase) {
+    /*
+     * Check if the pools overlap if we increase one of the pools.
+     * Note that the choice of pool to increase is arbitrary as
+     * they are the dual of each other.
+     */
+    if (user_border + increase > reserved_border) {
 
         /*
-         * The user pool border has reached the reserved pool border.
+         * The pool borders have reached each other.
          * Attempt to reduce memory fragmentation in each pool.
          */
         cleanse_user_pool();
@@ -135,12 +145,53 @@ void increase_reserved_pool(size_t increase) {
         reserved_border = current_alloc->reserved_pool_border;
 
         // Check if pool cleansing prevents pool overlap
-        if (user_border > reserved_border - increase) {
+        if (user_border + increase > reserved_border) {
 
             // Cleaning up the pools did not work, heap is considered full
-            return;
+            return false;
 
         }
+
+    }
+
+    return true;
+
+}
+
+void increase_user_pool(size_t increase) {
+
+    if (current_alloc == NULL) {
+
+        // There is no Allocator to operate on
+        return;
+
+    }
+
+    if (pool_overlap(increase)) {
+
+        // There is an overlap, the heap is considered full
+        return;
+
+    }
+
+    // Shift the border of the user pool upwards
+    current_alloc->user_pool_border += increase;
+
+}
+
+void increase_reserved_pool(size_t increase) {
+
+    if (current_alloc == NULL) {
+
+        // There is no Allocator to operate on
+        return;
+
+    }
+
+    if (pool_overlap(increase)) {
+
+        // There is an overlap, the heap is considered full
+        return;
 
     }
 
@@ -159,18 +210,8 @@ Node* create_metadata_node(char* memory_start, size_t block_size, bool is_free) 
 
     }
 
-    /*
-     * TODO. Should I first increase the reserved pool,
-     * then insert my memorydata? I think that makes sense
-     * as of right now, I am going to the border,
-     * from the border inserting my data,
-     * then increasing the border.
-     *
-     * It makes more sense that I increase the border
-     * to get away from the data that already was at
-     * the border, and then insert my memory data.
-     *
-     */
+    // Increase the reserved pool to accommodate for the MemoryData
+    increase_reserved_pool(sizeof(MemoryData));
 
     MemoryData* data = (MemoryData*) current_alloc->reserved_pool_border;
 
@@ -180,8 +221,9 @@ Node* create_metadata_node(char* memory_start, size_t block_size, bool is_free) 
     data->is_free = is_free;
     data->in_use = true;
 
-    // Increase the reserved pool to accommodate for the MemoryData
-    increase_reserved_pool(sizeof(MemoryData));
+    // Increase the user and reserved pool to accommodate for the Node
+    increase_user_pool(block_size);
+    increase_reserved_pool(sizeof(Node));
 
     // Create Node containing the MemoryData
     Node* node = (Node*) current_alloc->reserved_pool_border;
@@ -191,9 +233,6 @@ Node* create_metadata_node(char* memory_start, size_t block_size, bool is_free) 
     node->next = NULL;
     node->id = 0;
     node->data = (void*) data;
-
-    // Increase the reserved pool to accommodate for the Node
-    increase_reserved_pool(sizeof(Node));
 
     return node;
 

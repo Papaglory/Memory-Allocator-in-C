@@ -93,7 +93,6 @@ typedef struct {
      */
     char* reserved_pool_border;
 
-
     /*
      * The least amount of memory needed to initialize
      * an Allocator object and its metadata during creation.
@@ -121,6 +120,9 @@ typedef struct {
 * @return Returns a pointer to the created Allocator.
 */
 Allocator* create_allocator(size_t size);
+
+
+void increase_user_pool(size_t increase);
 
 /*
 * @brief Increase the reserved pool of the Allocator pointed to

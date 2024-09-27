@@ -25,6 +25,8 @@ void print_allocator_stats(Allocator* alloc) {
     printf("%-*s%zu\n", align_size, "heap_size:", alloc->heap_size);
     printf("%-*s%zu\n", align_size, "reserved_pool_size:", alloc->reserved_pool_size);
 
+    printf("\n");
+
 }
 
 void print_list_stats(LinkedList* list) {
@@ -107,9 +109,9 @@ void print_list_stats(LinkedList* list) {
 
 void creation_test() {
 
-    printf("\n%s\n", "FUNCTION CALL: creation_test");
+    printf("\n%s\n", "STARTING TEST: creation_test");
     // 152 bytes is the limit to create an Allocator atm
-    Allocator* alloc = create_allocator(200);
+    Allocator* alloc = create_allocator(800);
     set_allocator(alloc);
 
     print_allocator_stats(alloc);
@@ -123,14 +125,20 @@ void creation_test() {
 
 void malloc_test() {
 
-    printf("\n%s\n", "FUNCTION CALL: malloc_test");
+    printf("\n%s\n", "STARTING TEST: malloc_test");
 
-    Allocator* alloc = create_allocator(200);
+    Allocator* alloc = create_allocator(800);
     set_allocator(alloc);
 
     int* foo = allocator_malloc(sizeof(int));
 
-    // printf("malloc result: %p", foo);
+    int align_size = 16;
+
+    printf("%-*s%p\n", align_size, "malloc result:", foo);
+
+    print_allocator_stats(alloc);
+
+    print_list_stats(alloc->list);
 
     destroy_allocator();
 
@@ -145,7 +153,7 @@ int main() {
 
     creation_test();
 
-    //malloc_test();
+    malloc_test();
 
 
     printf("\n%s\n", "----TEST ENDED----");
