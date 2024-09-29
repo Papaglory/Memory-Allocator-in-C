@@ -354,18 +354,8 @@ Node* create_metadata_node(char* memory_start, size_t block_size, bool is_free) 
 
     }
 
-    char* before = current_alloc->reserved_pool_border;
-
     // Increase the reserved pool to accommodate for the MemoryData
     increase_reserved_pool(sizeof(MemoryData));
-
-    if (before == current_alloc->reserved_pool_border) {
-
-
-        printf("SAME\n");
-        fflush(stdout);
-
-    }
 
     MemoryData* data = (MemoryData*) current_alloc->reserved_pool_border;
 

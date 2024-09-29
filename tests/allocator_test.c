@@ -27,6 +27,9 @@ void print_allocator_stats(Allocator* alloc) {
 
     printf("\n");
     printf("%-*s%zu\n", align_size, "Calculated heap size", alloc->heap_end-alloc->heap_start);
+    printf("%-*s%zu\n", align_size, "Calculated user pool size", alloc->reserved_pool_border-alloc->heap_start);
+    size_t size = sizeof(Node) + sizeof(MemoryData);
+    printf("%-*s%zu\n", align_size, "Calculated metadata Node size", size);
 
     printf("\n");
 
@@ -142,11 +145,25 @@ void malloc_test() {
     Allocator* alloc = create_allocator(800);
     set_allocator(alloc);
 
-    int* foo = allocator_malloc(sizeof(int));
+    print_allocator_stats(alloc);
+
+    int* my_int = allocator_malloc(sizeof(int));
+    *my_int = 42;
 
     int align_size = 16;
 
-    printf("%-*s%p\n", align_size, "malloc result:", foo);
+    printf("%-*s%p\n", align_size, "Address of int:", my_int);
+    printf("%-*s%d\n", align_size, "Value of int:", *my_int);
+
+    print_allocator_stats(alloc);
+
+    print_list_stats(alloc->list);
+
+    size_t* my_size = allocator_malloc(sizeof(size_t));
+    *my_size = 101;
+
+    printf("%-*s%p\n", align_size, "Address of size_t:", my_size);
+    printf("%-*s%zu\n", align_size, "Value of size:", *my_size);
 
     print_allocator_stats(alloc);
 
@@ -198,8 +215,7 @@ int main() {
     srand(time(NULL));
 
     printf("\n%s\n", "----TEST STARTED----");
-    //residual_node_test();
-    creation_test();
+    //creation_test();
 
     //malloc_test();
 
