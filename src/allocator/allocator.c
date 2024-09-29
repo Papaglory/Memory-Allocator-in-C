@@ -630,7 +630,7 @@ void cleanse_reserved_pool() {
 }
 
 /*
- * @brief Create a residual Node from the original input Node
+ * @brief Create a residual Node from the original input Node.
  * and update the original Node by discarding the memory block
  * now given to the residual Node.
  *

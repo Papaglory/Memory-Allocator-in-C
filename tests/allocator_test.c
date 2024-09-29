@@ -6,6 +6,7 @@
 
 #include "../src/allocator/allocator.h"
 #include "../src/linked_list/linked_list_iterator.h"
+#include "../src/linked_list/merge_sort_linked_list.h"
 
 void print_allocator_stats(Allocator* alloc) {
 
@@ -23,6 +24,9 @@ void print_allocator_stats(Allocator* alloc) {
     printf("%-*s%zu\n", align_size, "initial_reserved_pool_size:", alloc->initial_reserved_pool_size);
     printf("%-*s%zu\n", align_size, "heap_size:", alloc->heap_size);
     printf("%-*s%zu\n", align_size, "reserved_pool_size:", alloc->reserved_pool_size);
+
+    printf("\n");
+    printf("%-*s%zu\n", align_size, "Calculated heap size", alloc->heap_end-alloc->heap_start);
 
     printf("\n");
 
@@ -49,11 +53,6 @@ void print_list_stats(LinkedList* list) {
 
         Node* node = next(&iter);
         MemoryData* data = node->data;
-
-        if (!data) {
-            printf("NO DATA");
-            fflush(stdout);
-        }
 
         // Printing Node id
         printf(
@@ -128,6 +127,7 @@ void creation_test() {
     Node* residual_node = create_residual_node(list->head, 10);
 
     add(list, residual_node);
+    merge_sort_list(list);
 
     print_list_stats(list);
 
@@ -181,9 +181,6 @@ void residual_node_test() {
     add(&list, node);
 
     size_t residual_size = 10;
-
-    printf("HERE\n");
-    fflush(stdout);
 
     Node* residual_node = create_residual_node(node, residual_size);
 
