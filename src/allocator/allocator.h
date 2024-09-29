@@ -227,6 +227,7 @@ void release_allocator();
 
 
 
+// TODO remove this when done with testing
 Node* create_residual_node(Node* node, size_t residual_size);
 
 

@@ -50,7 +50,7 @@ LinkedList* add(LinkedList* list, Node* node);
 *
 * @note This will also free the Node from the heap.
 *
-* @param1 The linked list.
+* @param1 The LinkedList.
 * @param2 The ID corresponding to the Node to
 * be deleted.
 * @return Returns a pointer to the LinkedList.
@@ -64,12 +64,12 @@ LinkedList* delete_node(LinkedList* list, size_t id);
 * $note This will not free the Node from the heap,
 * only drop it from the LinkedList. Use with caution.
 *
-* @param1 The linked list.
+* @param1 The LinkedList.
 * @param2 The ID corresponding to the Node to
 * be deleted.
-* @return Returns a pointer to the LinkedList.
+* @return Returns a pointer to the Node that was dropped.
 */
-LinkedList* drop_node(LinkedList* list, size_t id);
+Node* drop_node(LinkedList* list, size_t id);
 
 /*
 * @brief Search by value in the linked list. The function

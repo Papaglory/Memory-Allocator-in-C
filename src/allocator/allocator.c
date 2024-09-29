@@ -407,11 +407,13 @@ Node* merge_meta_data_nodes(LinkedList* list, Node* left_node, Node* right_node)
     right_data->in_use = false;
     right_data->is_free = true;
 
-    // Remove the discarded Node from the LinkedList
+    /*
+     * Remove the discarded Node from the LinkedList.
+     * Note that when using drop_node(), the Node is
+     * not freed, only dropped from the list.
+     */
     size_t id = right_node->id;
-    //TODO This should not free the Node, only remove it
-    //from the list.
-    delete_node(list, id);
+    drop_node(list, id);
 
     return left_node;
 
