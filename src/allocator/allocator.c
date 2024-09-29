@@ -128,91 +128,6 @@ Allocator* create_allocator(size_t heap_size) {
     return alloc;
 }
 
-
-
-void print_list_stats2(LinkedList* list) {
-
-    if (!list) { return; }
-
-    printf("\n%s\n", "FUNCTION CALL: print_list_stats2");
-
-    int align_size = 16;
-
-    printf("%-*s%zu\n", align_size, "list size: ", list->size);
-
-    int indent_size = 8;
-
-    LinkedListIterator iter;
-    iter.current = list->head;
-
-    printf("%s\n", "Nodes:");
-
-    while (has_next(&iter)) {
-
-        Node* node = next(&iter);
-        MemoryData* data = node->data;
-
-        if (!data) {
-            printf("NO DATA");
-            fflush(stdout);
-        }
-
-        // Printing Node id
-        printf(
-            "%*s%-*s%zu\n",
-            indent_size,
-            "",
-            align_size,
-            "ID:",
-            node->id
-        );
-
-        // Printing in_use with true/false text
-        printf(
-            "%*s%-*s%s\n",
-            indent_size,
-            "",
-            align_size,
-            "in_use:",
-            data->in_use ? "true" : "false"
-        );
-
-        // Printing is_free with true/false text
-        printf(
-            "%*s%-*s%s\n",
-            indent_size,
-            "",
-            align_size,
-            "is_free:",
-            data->is_free ? "true" : "false"
-        );
-
-        // Printing block_size
-        printf(
-            "%*s%-*s%zu\n",
-            indent_size,
-            "",
-            align_size,
-            "block_size:",
-            data->block_size
-        );
-
-        // Printing memory_start
-        printf(
-            "%*s%-*s%p\n",
-            indent_size,
-            "",
-            align_size,
-            "memory_start:",
-            data->memory_start
-        );
-
-        printf("\n");
-
-    }
-
-}
-
 char* retrieve_user_pool_border() {
 
     if (!current_alloc) { return NULL; }
@@ -480,42 +395,132 @@ void cleanse_user_pool() {
         // We have a Node to merge with
         merge_meta_data_nodes(list, node, next_node);
 
+        /*
+         * With the Nodes merged, we have to check if the
+         * next Node of the merged Node is free and can
+         * be merged with.
+         */
+
+        next_node = node->next;
+        next_data = (MemoryData*) next_node->data;
+
+        while (next_node && next_data->is_free) {
+
+            // The next Node is free as well, we can merge
+            merge_meta_data_nodes(list, node, next_node);
+
+            next_node = node->next;
+            next_data = (MemoryData*) next_node->data;
+
+        }
+
     } // End while
 
     /*
-     * Reset the iterator and remove empty spaces in the managed
-     * heap by sliding each memory block corresponding to each
-     * metadata Node down to shrink the user pool.
+     * Reset the iterator and move free memory blocks to a
+     * higher memory addresses and move the non-free memory
+     * blocks to lower memory addresses such that there is
+     * no memory fragmentation.
+     *
+     * A 'snowball effect' algorithm is used.
+     * We go through the list and mark the first free Node
+     * as the snowball. Since the list have already merged
+     * all free adjacent Nodes, the next Node must be
+     * non-free (if not, there is no fragmentation and we
+     * are done).
+     *
+     * We swap the memory block of the snowball
+     * Node with the non-free Node and update the
+     * 'next' reference for the LinkedList accordingly.
+     *
+     * We then check if the snowball Node can merge with the
+     * right-adjacent Node (add to the snowball).
+     *
+     * Thereafter, we swap the snowball Node with the right-adjacent
+     * Node which must be non-free (if not, we are done).
+     *
+     * Eventually, the free Node will have floated to the top of
+     * the managed heap with all the free memory.
      */
     iter.current = get_head(list);
 
     char* optimal_memory_start = current_alloc->heap_start;
 
+    // Locate the first free Node
+    Node* free_node = NULL;
     while (has_next(&iter)) {
 
         Node* node = next(&iter);
         MemoryData* data = (MemoryData*) node->data;
 
-        if (data->memory_start != optimal_memory_start) {
+        if (data->is_free) {
 
-            // The memory block can be moved to a lower address
-            memcpy(
-                optimal_memory_start,
-                data->memory_start,
-                data->block_size
-            );
-
-            data->memory_start = optimal_memory_start;
+            free_node = node;
+            break;
 
         }
 
-        /*
-         * The optimal memory start of the next Node is at the end
-         * of the memory block of the current Node.
-        */
-        optimal_memory_start += data->block_size;
+    }
+
+    if (!free_node) {
+
+        // There is no free Node, the heap must be full
+        return;
 
     }
+
+    // Perform the Node swapping and float the free Node to the higher memory
+    while (has_next(&iter)) {
+
+        Node* node = next(&iter);
+        MemoryData* data = (MemoryData*) node->data;
+
+        if (data->is_free) {
+
+            printf("The next Node is free, this is not supposed to be\n");
+
+        }
+
+        MemoryData* free_data = (MemoryData*) free_node->data;
+
+        /*
+         * Temporarily store the data on the stack.
+         * We are only interested in the block_size.
+         */
+        size_t free_node_block_size = free_data->block_size;
+        char* non_memory_start = data->memory_start;
+
+        // Move the non-free Node to the memory start of the free Node
+        memcpy(
+            free_data->memory_start,
+            data->memory_start,
+            data->block_size
+        );
+
+        data->memory_start = free_data->memory_start;
+
+        // Move the free Node
+        free_data->memory_start = non_memory_start;
+
+        // Swap their order in the list
+        Node* temp_next = node->next;
+        node->next = free_node->next;
+        free_node->next = temp_next;
+
+        // See if the free Node can merged with the right-adjacent Node
+        if (!free_node->next) {
+
+            MemoryData* merge_data = (MemoryData*) free_node->data;
+            if (merge_data->is_free) {
+
+                // It is free, thus we merge
+                merge_meta_data_nodes(list, free_node, free_node->next);
+
+            }
+
+        }
+
+    } // End while
 
 }
 
@@ -551,38 +556,54 @@ void cleanse_reserved_pool() {
     // This will be the increments when doing metadata Node traversal
     size_t meta_data_node_size = sizeof(Node) + sizeof(MemoryData);
 
-    // Memory location for the start of metadata Node traversal
+    /*
+     * Memory location for the start of metadata Node traversal.
+     * Note that during Allocator creation, a metadata Node is
+     * created to accommodate for the memory block of the whole
+     * user pool. Thus, the first metadata Node is located at the
+     * initial reserved pool border during creation.
+     */
     char* meta_data_node =
         current_alloc->heap_end
-        - current_alloc->initial_reserved_pool_size
-        - meta_data_node_size; // Need this because  we go backwards in memory
+        - current_alloc->initial_reserved_pool_size;
 
     // Iterate through the metadata Nodes
-    while (meta_data_node > current_alloc->reserved_pool_border) {
+    while (meta_data_node >= current_alloc->reserved_pool_border) {
 
         // Retrieve Node's corresponding MemoryData
         MemoryData* data = (MemoryData*) (meta_data_node + sizeof(Node));
 
+        /*
+         * Check if we have found a Node that is not
+         * in use by the LinkedList.
+         */
         if (data->in_use == false) {
 
             /*
-             * Found an available metadata Node space.
+             * Search for a border Node that is in use by the
+             * LinkedList. If it is not in use, then we can
+             * ignore it and move the border to the next
+             * metadata Node that is in use.
              */
 
             Node* border_node = (Node*) current_alloc->reserved_pool_border;
             MemoryData* border_data = (MemoryData*) border_node->data;
 
-            /*
-             * Check for unintended situations:
-             * The border Node is not in use, thus the border is
-             * located at a wrong memory address!
-             *
-             * Or The border Node is at a higher memory address
-             * than the address where we want to move it to.
-             * We are thus done with the cleansing.
-             */
-            if (border_data->in_use == false || (char*) border_node > meta_data_node) {
+            while (!border_data->in_use) {
 
+                // Shift the reserved pool border by one metadata Node
+                current_alloc->reserved_pool_border += meta_data_node_size;
+                current_alloc->reserved_pool_size -= meta_data_node_size;
+
+                // Update for next iteration
+                border_node = (Node*) current_alloc->reserved_pool_border;
+                border_data = (MemoryData*) border_node->data;
+
+            }
+
+            if ((char*) border_node == meta_data_node) {
+
+                // No unique Node was found
                 return;
 
             }
@@ -590,31 +611,9 @@ void cleanse_reserved_pool() {
             // Move the border metadata Node to the vacant space
             memcpy(meta_data_node, border_node, meta_data_node_size);
 
-            // Update the reserved pool border
-            char* new_border = current_alloc->reserved_pool_border;
-            size_t new_pool_size = current_alloc->reserved_pool_size;
-            while (new_border < meta_data_node) {
-
-                // Move the border to new potential location
-                new_border += meta_data_node_size;
-                new_pool_size -= meta_data_node_size;
-
-                Node* new_border_node = (Node*) current_alloc->reserved_pool_border;
-                MemoryData* new_border_data = (MemoryData*) new_border_node->data;
-
-                // Check if the Node is in use
-                if (new_border_data->in_use == false) {
-
-                    // Metadata Node is not in use, can therefore move border further
-                    continue;
-
-                }
-
-                // Node is in use, new border will therefore be here
-                current_alloc->reserved_pool_border = new_border;
-                current_alloc->reserved_pool_size = new_pool_size;
-
-            }
+            // Shift the border now that the border Node has been moved
+            current_alloc->reserved_pool_border += meta_data_node_size;
+            current_alloc->reserved_pool_size -= meta_data_node_size;
 
         }
 
