@@ -6,6 +6,7 @@
 
 #include "../src/allocator/allocator.h"
 #include "../src/linked_list/linked_list_iterator.h"
+#include "../src/linked_list/merge_sort_linked_list.h"
 
 void print_allocator_stats(Allocator* alloc) {
 
@@ -23,6 +24,12 @@ void print_allocator_stats(Allocator* alloc) {
     printf("%-*s%zu\n", align_size, "initial_reserved_pool_size:", alloc->initial_reserved_pool_size);
     printf("%-*s%zu\n", align_size, "heap_size:", alloc->heap_size);
     printf("%-*s%zu\n", align_size, "reserved_pool_size:", alloc->reserved_pool_size);
+
+    printf("\n");
+    printf("%-*s%zu\n", align_size, "Calculated heap size", alloc->heap_end-alloc->heap_start);
+    printf("%-*s%zu\n", align_size, "Calculated user pool size", alloc->reserved_pool_border-alloc->heap_start);
+    size_t size = sizeof(Node) + sizeof(MemoryData);
+    printf("%-*s%zu\n", align_size, "Calculated metadata Node size", size);
 
     printf("\n");
 
@@ -49,11 +56,6 @@ void print_list_stats(LinkedList* list) {
 
         Node* node = next(&iter);
         MemoryData* data = node->data;
-
-        if (!data) {
-            printf("NO DATA");
-            fflush(stdout);
-        }
 
         // Printing Node id
         printf(
@@ -128,6 +130,7 @@ void creation_test() {
     Node* residual_node = create_residual_node(list->head, 10);
 
     add(list, residual_node);
+    merge_sort_list(list);
 
     print_list_stats(list);
 
@@ -142,11 +145,25 @@ void malloc_test() {
     Allocator* alloc = create_allocator(800);
     set_allocator(alloc);
 
-    int* foo = allocator_malloc(sizeof(int));
+    print_allocator_stats(alloc);
+
+    int* my_int = allocator_malloc(sizeof(int));
+    *my_int = 42;
 
     int align_size = 16;
 
-    printf("%-*s%p\n", align_size, "malloc result:", foo);
+    printf("%-*s%p\n", align_size, "Address of int:", my_int);
+    printf("%-*s%d\n", align_size, "Value of int:", *my_int);
+
+    print_allocator_stats(alloc);
+
+    print_list_stats(alloc->list);
+
+    size_t* my_size = allocator_malloc(sizeof(size_t));
+    *my_size = 101;
+
+    printf("%-*s%p\n", align_size, "Address of size_t:", my_size);
+    printf("%-*s%zu\n", align_size, "Value of size:", *my_size);
 
     print_allocator_stats(alloc);
 
@@ -156,44 +173,122 @@ void malloc_test() {
 
 }
 
-void residual_node_test() {
+void free_test() {
+
+    printf("\n%s\n", "STARTING TEST: free_test");
 
     Allocator* alloc = create_allocator(800);
     set_allocator(alloc);
 
-    Node* node = malloc(sizeof(Node));
+    print_allocator_stats(alloc);
 
-    MemoryData* data = malloc(sizeof(MemoryData));
+    int* my_int = allocator_malloc(sizeof(int));
+    *my_int = 42;
 
-    node->data = (void*) data;
-    node->id = 0;
-    node->next = NULL;
-    node->data_size = sizeof(MemoryData);
+    int* my_int2 = allocator_malloc(sizeof(int));
+    *my_int = 49;
+
+    int align_size = 16;
+
+    printf("%-*s%p\n", align_size, "Address of int:", my_int);
+    printf("%-*s%d\n", align_size, "Value of int:", *my_int);
+
+    print_allocator_stats(alloc);
+
+    print_list_stats(alloc->list);
+
+    size_t* my_size = allocator_malloc(sizeof(size_t));
+    *my_size = 101;
+
+    printf("%-*s%p\n", align_size, "Address of size_t:", my_size);
+    printf("%-*s%zu\n", align_size, "Value of size:", *my_size);
+
+    print_allocator_stats(alloc);
+
+    print_list_stats(alloc->list);
+
+    char* char_ptr = allocator_malloc(sizeof(char*));
+    *char_ptr = 'A';
+
+    printf("%-*s%p\n", align_size, "Address of char_ptr:", char_ptr);
+    printf("%-*s%c\n", align_size, "Value of char_ptr:", *char_ptr);
+
+    print_allocator_stats(alloc);
+
+    print_list_stats(alloc->list);
 
 
-    data->in_use = true;
-    data->is_free = true;
-    data->memory_start = (char*) 8;
-    data->block_size = 12;
+    printf("Calling Allocator free\n");
+    allocator_free(my_int2);
 
-    LinkedList list;
+    print_allocator_stats(alloc);
 
-    add(&list, node);
+    print_list_stats(alloc->list);
 
-    size_t residual_size = 10;
+    printf("Calling Allocator free\n");
+    allocator_free(char_ptr);
 
-    printf("HERE\n");
-    fflush(stdout);
+    print_allocator_stats(alloc);
 
-    Node* residual_node = create_residual_node(node, residual_size);
+    print_list_stats(alloc->list);
 
-    printf("%p\n", node);
-    printf("%p\n", residual_node);
+    printf("Calling Allocator free\n");
+    allocator_free(my_size);
 
-    add(&list, residual_node);
+    print_allocator_stats(alloc);
 
-    print_list_stats(&list);
+    print_list_stats(alloc->list);
+
+
+    destroy_allocator();
+
 }
+
+
+void cleanse_pools_test() {
+
+    printf("\n%s\n", "STARTING TEST: cleanse_pools_test");
+
+    Allocator* alloc = create_allocator(800);
+    set_allocator(alloc);
+
+    print_allocator_stats(alloc);
+
+    int* my_int = allocator_malloc(sizeof(int));
+    *my_int = 42;
+
+    int align_size = 16;
+
+    printf("%-*s%p\n", align_size, "Address of int:", my_int);
+    printf("%-*s%d\n", align_size, "Value of int:", *my_int);
+
+    print_allocator_stats(alloc);
+
+    print_list_stats(alloc->list);
+
+    size_t* my_size = allocator_malloc(sizeof(size_t));
+    *my_size = 101;
+
+    printf("%-*s%p\n", align_size, "Address of size_t:", my_size);
+    printf("%-*s%zu\n", align_size, "Value of size:", *my_size);
+
+    print_allocator_stats(alloc);
+
+    print_list_stats(alloc->list);
+
+    printf("Calling Allocator free\n");
+    allocator_free(my_int);
+
+
+    print_allocator_stats(alloc);
+
+    print_list_stats(alloc->list);
+
+    destroy_allocator();
+
+}
+
+
 
 int main() {
 
@@ -201,11 +296,13 @@ int main() {
     srand(time(NULL));
 
     printf("\n%s\n", "----TEST STARTED----");
-    //residual_node_test();
-    creation_test();
+    //creation_test();
 
     //malloc_test();
 
+    //free_test();
+
+    cleanse_pools_test();
 
     printf("\n%s\n", "----TEST ENDED----");
 

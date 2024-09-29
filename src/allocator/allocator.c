@@ -354,18 +354,8 @@ Node* create_metadata_node(char* memory_start, size_t block_size, bool is_free) 
 
     }
 
-    char* before = current_alloc->reserved_pool_border;
-
     // Increase the reserved pool to accommodate for the MemoryData
     increase_reserved_pool(sizeof(MemoryData));
-
-    if (before == current_alloc->reserved_pool_border) {
-
-
-        printf("SAME\n");
-        fflush(stdout);
-
-    }
 
     MemoryData* data = (MemoryData*) current_alloc->reserved_pool_border;
 
@@ -413,13 +403,19 @@ Node* merge_meta_data_nodes(LinkedList* list, Node* left_node, Node* right_node)
     // merge the block sizes
     left_data->block_size += right_data->block_size;
 
+    printf("-----new block_size: %zu\n", left_data->block_size);
+
     // Mark the right Node as vacant
     right_data->in_use = false;
     right_data->is_free = true;
 
-    // Remove the discarded Node from the LinkedList
+    /*
+     * Remove the discarded Node from the LinkedList.
+     * Note that when using drop_node(), the Node is
+     * not freed, only dropped from the list.
+     */
     size_t id = right_node->id;
-    delete_node(list, id);
+    drop_node(list, id);
 
     return left_node;
 
@@ -630,7 +626,7 @@ void cleanse_reserved_pool() {
 }
 
 /*
- * @brief Create a residual Node from the original input Node
+ * @brief Create a residual Node from the original input Node.
  * and update the original Node by discarding the memory block
  * now given to the residual Node.
  *
@@ -788,6 +784,9 @@ Node* naive_search(size_t size) {
  */
 void allocator_free(void* ptr) {
 
+    printf("----- allocator_free has been called!\n");
+    fflush(stdout);
+
     if (current_alloc == NULL) {
 
         // There is no Allocator object to process
@@ -815,7 +814,7 @@ void allocator_free(void* ptr) {
         Node* node = next(&iter);
         MemoryData* data = (MemoryData*) node->data;
 
-        if (data->memory_start == ptr) {
+        if (data->memory_start == ptr && !data->is_free) {
 
             // Node has been found
             matched_node = node;
@@ -829,13 +828,28 @@ void allocator_free(void* ptr) {
 
     if (!matched_node) {
 
+        printf("---- No Node was found!\n");
+        fflush(stdout);
+
        /*
         * The corresponding Node was not found.
         * the Allocator has not given out this pointer.
         */
         return;
 
+    } else {
+
+        printf("----NODE ID %zu\n", matched_node->id);
+        fflush(stdout);
+
     }
+
+    MemoryData* matched_data = (MemoryData*) matched_node->data;
+    char* matched_memory_start = matched_data->memory_start;
+    char* matched_memory_end = matched_memory_start + matched_data->block_size;
+
+    // Mark the memory block as free
+    matched_data->is_free = true;
 
     /*
      * Reset the iterator and see if the newly freed Node
@@ -843,44 +857,45 @@ void allocator_free(void* ptr) {
      */
     iter.current = get_head(list);
 
-    MemoryData* matched_data = (MemoryData*) matched_node->data;
-    char* matched_memory_start = matched_data->memory_start;
-    char* matched_memory_end = matched_memory_start + matched_data->block_size;
-
-    bool has_merged = false;
     while (has_next(&iter)) {
 
         Node* node = next(&iter);
-        MemoryData* data = node->data;
 
+        // This is the same Node
+        if (node->id == matched_node->id) { continue; }
+
+        MemoryData* data = node->data;
         char* memory_start = data->memory_start;
         char* memory_end = memory_start + data->block_size;
 
         // Check if there is a right adjacent Node to merge with
-        if (memory_start == matched_memory_end) {
+        if (memory_start == matched_memory_end && data->is_free) {
 
             merge_meta_data_nodes(list, matched_node, node);
-            has_merged = true;
+
+            // Update the block size ends
+            matched_memory_start = matched_data->memory_start;
+            matched_memory_end = matched_memory_start + matched_data->block_size;
 
         }
 
         // Check if there is a left adjacent Node to merge with
-        if (memory_end == matched_memory_start) {
+        if (memory_end == matched_memory_start && data->is_free) {
 
             merge_meta_data_nodes(list, node, matched_node);
-            has_merged = true;
+            /*
+             * Since merging results in the left Node remaining,
+             * 'matched_node' will be discarded from the list.
+             * Therefore, update to keep track of the matched
+             * Node.
+             */
+            matched_node = node;
+
+            // Update the block size ends
+            matched_memory_start = matched_data->memory_start;
+            matched_memory_end = matched_memory_start + matched_data->block_size;
 
         }
-
-    }
-
-    if (has_merged == false) {
-
-        /*
-        * No adjacent Nodes were found.
-        * Thus we keep this Node in the LinkedList.
-        */
-        matched_data->is_free = true;
 
     }
 

@@ -10,7 +10,7 @@
 
 LinkedList* create_list() {
 
-    LinkedList* list = (LinkedList*) allocator_malloc(sizeof(LinkedList));
+    LinkedList* list = (LinkedList*) malloc(sizeof(LinkedList));
     if (list == NULL) {
 
         // Allocation failed
@@ -69,82 +69,84 @@ LinkedList* add(LinkedList* list, Node* node) {
 
 LinkedList* delete_node(LinkedList* list, size_t id) {
 
-    // Check: list exists, non-empty, id within range
-    if (list == NULL || list->size == 0 || list->size < id) {
+    Node* dropped_node = drop_node(list, id);
 
-        return NULL;
+    if (!dropped_node) { return NULL; }
 
-    }
+    free(dropped_node);
 
-    // Create an iterator for the list
-    LinkedListIterator* iter = create_iterator(list);
+    return list;
 
-    // Retrieve Nodes for base case
-    Node* prev = next(iter);
-    if (prev == NULL) {
+}
 
-        destroy_iterator(iter);
+Node* drop_node(LinkedList* list, size_t id) {
 
-        return NULL;
+    if (!list || list->head == NULL) { return NULL; }
 
-    }
-    Node* current = next(iter);
+    /*
+    * Check special conditions when the
+    * drop Node is the head.
+    */
+    if (list->size == 1 && list->head->id == id) {
 
-    // Check if head corresponds with 'id'
-    if (prev->id == id) {
+        // There is only one Node
+        Node* dropped_node = list->head;
+        list->head = NULL;
+        list->tail = NULL;
+        list->size = 0;
 
-        // Nominate new head
-        list->head = current;
-        list->size--;
+        return dropped_node;
 
-        // Update tail if this was the only Node
-        if (list->size == 0) {
+    } else if (list->head->id == id) {
 
-            list->tail = NULL;
+        // The head is the Node
+        Node* dropped_node = list->head;
+        list->head = list->head->next;
+        list->size -= 1;
 
-        }
-
-        // Free the Node from memory
-        destroy_node(prev);
-        destroy_iterator(iter);
-
-        return list;
+        return dropped_node;
 
     }
 
-    // Search remaining part of list
-    while (current != NULL) {
+    LinkedListIterator iter;
+    iter.current = list->head;
 
-        // Check if it is the Node to be removed
-        if (current->id == id) {
+    // Drop the head as it has already been inspected
+    Node* prev_node = next(&iter);
+    Node* node = NULL;
+    while (has_next(&iter)) {
 
-            // Remove target from reference chain
-            prev->next = current->next;
+        node = next(&iter);
 
-            // Check if prev is the new tail
-            if (current->next == NULL) {
+        if (node->id == id) {
 
-                list->tail = prev;
+            /*
+            * The Node has been found!
+            * Handle special case if it is the tail.
+            */
+            if (node == list->tail) {
+
+                list->tail = prev_node;
+                prev_node->next = NULL;
+
+            } else {
+
+                prev_node->next = node->next;
 
             }
 
-            // Free the Node from memory
-            destroy_node(current);
-            list->size--;
+            list->size -= 1;
 
-            break;
+            return node;
 
         }
 
-        // Iterate to the next Node
-        prev = current;
-        current = next(iter);
+        prev_node = node;
 
-    }
+    } // End while
 
-    destroy_iterator(iter);
-
-    return list;
+    // No Node was found
+    return NULL;
 
 }
 
@@ -157,13 +159,14 @@ size_t search_by_value(LinkedList* list, void* data, size_t data_size) {
     }
 
     // Go through each Node and check if it matches
-    LinkedListIterator* iter = create_iterator(list);
-    while (has_next(iter)) {
+    LinkedListIterator iter;
+    iter.current = list->head;
 
-        Node* node = next(iter);
+    while (has_next(&iter)) {
+
+        Node* node = next(&iter);
         if (node == NULL) {
 
-            destroy_iterator(iter);
             return NOT_FOUND;
 
         }
@@ -171,14 +174,11 @@ size_t search_by_value(LinkedList* list, void* data, size_t data_size) {
         // Compare the argument data to that of the Node
         if (data_size == node->data_size && memcmp(data, node->data, data_size) == 0) {
 
-            destroy_iterator(iter);
             return node->id;
 
         }
 
     }
-
-    destroy_iterator(iter);
 
     return NOT_FOUND;
 
@@ -205,18 +205,18 @@ void destroy_list(LinkedList* list) {
     }
 
     // Loop through the list and free each Node
-    LinkedListIterator* iter = create_iterator(list);
-    while (has_next(iter)) {
+    LinkedListIterator iter;
+    iter.current = list->head;
+
+    while (has_next(&iter)) {
 
         // Free the Node
-        Node* node = next(iter);
+        Node* node = next(&iter);
         destroy_node(node);
 
     }
 
-    destroy_iterator(iter);
-
     // With all the node set free, it is safe to free list struct
-    allocator_free(list);
+    free(list);
 
 }
