@@ -77,18 +77,16 @@ LinkedList* delete_node(LinkedList* list, size_t id) {
     }
 
     // Create an iterator for the list
-    LinkedListIterator* iter = create_iterator(list);
+    LinkedListIterator iter;
 
     // Retrieve Nodes for base case
-    Node* prev = next(iter);
+    Node* prev = next(&iter);
     if (prev == NULL) {
-
-        destroy_iterator(iter);
 
         return NULL;
 
     }
-    Node* current = next(iter);
+    Node* current = next(&iter);
 
     // Check if head corresponds with 'id'
     if (prev->id == id) {
@@ -106,7 +104,6 @@ LinkedList* delete_node(LinkedList* list, size_t id) {
 
         // Free the Node from memory
         destroy_node(prev);
-        destroy_iterator(iter);
 
         return list;
 
@@ -138,18 +135,18 @@ LinkedList* delete_node(LinkedList* list, size_t id) {
 
         // Iterate to the next Node
         prev = current;
-        current = next(iter);
+        current = next(&iter);
 
     }
-
-    destroy_iterator(iter);
 
     return list;
 
 }
 
-
 LinkedList* drop_node(LinkedList* list, size_t id) {
+
+    if (!list) { return NULL; }
+
 
     return NULL;
 

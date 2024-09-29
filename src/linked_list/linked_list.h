@@ -69,7 +69,7 @@ LinkedList* delete_node(LinkedList* list, size_t id);
 * be deleted.
 * @return Returns a pointer to the LinkedList.
 */
-LinkedList* drop_node(LinkedList* list, size_t id) {
+LinkedList* drop_node(LinkedList* list, size_t id);
 
 /*
 * @brief Search by value in the linked list. The function
