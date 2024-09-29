@@ -403,6 +403,8 @@ Node* merge_meta_data_nodes(LinkedList* list, Node* left_node, Node* right_node)
     // merge the block sizes
     left_data->block_size += right_data->block_size;
 
+    printf("-----new block_size: %zu\n", left_data->block_size);
+
     // Mark the right Node as vacant
     right_data->in_use = false;
     right_data->is_free = true;
@@ -858,8 +860,11 @@ void allocator_free(void* ptr) {
     while (has_next(&iter)) {
 
         Node* node = next(&iter);
-        MemoryData* data = node->data;
 
+        // This is the same Node
+        if (node->id == matched_node->id) { continue; }
+
+        MemoryData* data = node->data;
         char* memory_start = data->memory_start;
         char* memory_end = memory_start + data->block_size;
 
@@ -868,12 +873,27 @@ void allocator_free(void* ptr) {
 
             merge_meta_data_nodes(list, matched_node, node);
 
+            // Update the block size ends
+            matched_memory_start = matched_data->memory_start;
+            matched_memory_end = matched_memory_start + matched_data->block_size;
+
         }
 
         // Check if there is a left adjacent Node to merge with
         if (memory_end == matched_memory_start && data->is_free) {
 
             merge_meta_data_nodes(list, node, matched_node);
+            /*
+             * Since merging results in the left Node remaining,
+             * 'matched_node' will be discarded from the list.
+             * Therefore, update to keep track of the matched
+             * Node.
+             */
+            matched_node = node;
+
+            // Update the block size ends
+            matched_memory_start = matched_data->memory_start;
+            matched_memory_end = matched_memory_start + matched_data->block_size;
 
         }
 

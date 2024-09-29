@@ -185,6 +185,9 @@ void free_test() {
     int* my_int = allocator_malloc(sizeof(int));
     *my_int = 42;
 
+    int* my_int2 = allocator_malloc(sizeof(int));
+    *my_int = 49;
+
     int align_size = 16;
 
     printf("%-*s%p\n", align_size, "Address of int:", my_int);
@@ -204,14 +207,6 @@ void free_test() {
 
     print_list_stats(alloc->list);
 
-    printf("Calling Allocator free\n");
-    allocator_free(my_size);
-
-
-    print_allocator_stats(alloc);
-
-    print_list_stats(alloc->list);
-
     char* char_ptr = allocator_malloc(sizeof(char*));
     *char_ptr = 'A';
 
@@ -221,6 +216,29 @@ void free_test() {
     print_allocator_stats(alloc);
 
     print_list_stats(alloc->list);
+
+
+    printf("Calling Allocator free\n");
+    allocator_free(my_int2);
+
+    print_allocator_stats(alloc);
+
+    print_list_stats(alloc->list);
+
+    printf("Calling Allocator free\n");
+    allocator_free(char_ptr);
+
+    print_allocator_stats(alloc);
+
+    print_list_stats(alloc->list);
+
+    printf("Calling Allocator free\n");
+    allocator_free(my_size);
+
+    print_allocator_stats(alloc);
+
+    print_list_stats(alloc->list);
+
 
     destroy_allocator();
 
@@ -282,8 +300,9 @@ int main() {
 
     //malloc_test();
 
-    free_test();
+    //free_test();
 
+    cleanse_pools_test();
 
     printf("\n%s\n", "----TEST ENDED----");
 
