@@ -551,38 +551,54 @@ void cleanse_reserved_pool() {
     // This will be the increments when doing metadata Node traversal
     size_t meta_data_node_size = sizeof(Node) + sizeof(MemoryData);
 
-    // Memory location for the start of metadata Node traversal
+    /*
+     * Memory location for the start of metadata Node traversal.
+     * Note that during Allocator creation, a metadata Node is
+     * created to accommodate for the memory block of the whole
+     * user pool. Thus, the first metadata Node is located at the
+     * initial reserved pool border during creation.
+     */
     char* meta_data_node =
         current_alloc->heap_end
-        - current_alloc->initial_reserved_pool_size
-        - meta_data_node_size; // Need this because  we go backwards in memory
+        - current_alloc->initial_reserved_pool_size;
 
     // Iterate through the metadata Nodes
-    while (meta_data_node > current_alloc->reserved_pool_border) {
+    while (meta_data_node >= current_alloc->reserved_pool_border) {
 
         // Retrieve Node's corresponding MemoryData
         MemoryData* data = (MemoryData*) (meta_data_node + sizeof(Node));
 
+        /*
+         * Check if we have found a Node that is not
+         * in use by the LinkedList.
+         */
         if (data->in_use == false) {
 
             /*
-             * Found an available metadata Node space.
+             * Search for a border Node that is in use by the
+             * LinkedList. If it is not in use, then we can
+             * ignore it and move the border to the next
+             * metadata Node that is in use.
              */
 
             Node* border_node = (Node*) current_alloc->reserved_pool_border;
             MemoryData* border_data = (MemoryData*) border_node->data;
 
-            /*
-             * Check for unintended situations:
-             * The border Node is not in use, thus the border is
-             * located at a wrong memory address!
-             *
-             * Or The border Node is at a higher memory address
-             * than the address where we want to move it to.
-             * We are thus done with the cleansing.
-             */
-            if (border_data->in_use == false || (char*) border_node > meta_data_node) {
+            while (!border_data->in_use) {
 
+                // Shift the reserved pool border by one metadata Node
+                current_alloc->reserved_pool_border += meta_data_node_size;
+                current_alloc->reserved_pool_size -= meta_data_node_size;
+
+                // Update for next iteration
+                border_node = (Node*) current_alloc->reserved_pool_border;
+                border_data = (MemoryData*) border_node->data;
+
+            }
+
+            if ((char*) border_node == meta_data_node) {
+
+                // No unique Node was found
                 return;
 
             }
@@ -590,31 +606,9 @@ void cleanse_reserved_pool() {
             // Move the border metadata Node to the vacant space
             memcpy(meta_data_node, border_node, meta_data_node_size);
 
-            // Update the reserved pool border
-            char* new_border = current_alloc->reserved_pool_border;
-            size_t new_pool_size = current_alloc->reserved_pool_size;
-            while (new_border < meta_data_node) {
-
-                // Move the border to new potential location
-                new_border += meta_data_node_size;
-                new_pool_size -= meta_data_node_size;
-
-                Node* new_border_node = (Node*) current_alloc->reserved_pool_border;
-                MemoryData* new_border_data = (MemoryData*) new_border_node->data;
-
-                // Check if the Node is in use
-                if (new_border_data->in_use == false) {
-
-                    // Metadata Node is not in use, can therefore move border further
-                    continue;
-
-                }
-
-                // Node is in use, new border will therefore be here
-                current_alloc->reserved_pool_border = new_border;
-                current_alloc->reserved_pool_size = new_pool_size;
-
-            }
+            // Shift the border now that the border Node has been moved
+            current_alloc->reserved_pool_border += meta_data_node_size;
+            current_alloc->reserved_pool_size -= meta_data_node_size;
 
         }
 

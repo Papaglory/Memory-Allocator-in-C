@@ -258,6 +258,9 @@ void cleanse_pools_test() {
     *my_int = 42;
 
     int align_size = 16;
+    int* my_int2 = allocator_malloc(sizeof(int));
+
+    *my_int = 49;
 
     printf("%-*s%p\n", align_size, "Address of int:", my_int);
     printf("%-*s%d\n", align_size, "Value of int:", *my_int);
@@ -279,7 +282,17 @@ void cleanse_pools_test() {
     printf("Calling Allocator free\n");
     allocator_free(my_int);
 
+    print_allocator_stats(alloc);
+    print_list_stats(alloc->list);
 
+    printf("Calling Allocator free\n");
+    allocator_free(my_int2);
+
+    print_allocator_stats(alloc);
+    print_list_stats(alloc->list);
+
+    printf("Calling cleanse_reserved_pool\n");
+    cleanse_reserved_pool();
     print_allocator_stats(alloc);
 
     print_list_stats(alloc->list);
