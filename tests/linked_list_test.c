@@ -42,10 +42,13 @@ int main() {
 
     printf("Tail Node: %zu\n", list.tail->id);
 
-    delete_node(&list, 1);
-    node_4 = NULL;
+    //delete_node(&list, 2);
+    //printf("%s\n", "Node removed");
+    Node* dropped_node = drop_node(&list, 2);
 
-    printf("%s\n", "Node removed");
+    int* dropped_value = (int*) dropped_node->data;
+
+    printf("Dropped value is: %d\n", *dropped_value);
 
     printf("%s\n", "Printing the content of the Nodes");
 

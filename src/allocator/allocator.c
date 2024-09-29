@@ -812,7 +812,7 @@ void allocator_free(void* ptr) {
         Node* node = next(&iter);
         MemoryData* data = (MemoryData*) node->data;
 
-        if (data->memory_start == ptr) {
+        if (data->memory_start == ptr && !data->is_free) {
 
             // Node has been found
             matched_node = node;
@@ -838,10 +838,16 @@ void allocator_free(void* ptr) {
     } else {
 
         printf("----NODE ID %zu\n", matched_node->id);
-        printf("HERE\n");
         fflush(stdout);
 
     }
+
+    MemoryData* matched_data = (MemoryData*) matched_node->data;
+    char* matched_memory_start = matched_data->memory_start;
+    char* matched_memory_end = matched_memory_start + matched_data->block_size;
+
+    // Mark the memory block as free
+    matched_data->is_free = true;
 
     /*
      * Reset the iterator and see if the newly freed Node
@@ -849,11 +855,6 @@ void allocator_free(void* ptr) {
      */
     iter.current = get_head(list);
 
-    MemoryData* matched_data = (MemoryData*) matched_node->data;
-    char* matched_memory_start = matched_data->memory_start;
-    char* matched_memory_end = matched_memory_start + matched_data->block_size;
-
-    bool has_merged = false;
     while (has_next(&iter)) {
 
         Node* node = next(&iter);
@@ -863,30 +864,18 @@ void allocator_free(void* ptr) {
         char* memory_end = memory_start + data->block_size;
 
         // Check if there is a right adjacent Node to merge with
-        if (memory_start == matched_memory_end) {
+        if (memory_start == matched_memory_end && data->is_free) {
 
             merge_meta_data_nodes(list, matched_node, node);
-            has_merged = true;
 
         }
 
         // Check if there is a left adjacent Node to merge with
-        if (memory_end == matched_memory_start) {
+        if (memory_end == matched_memory_start && data->is_free) {
 
             merge_meta_data_nodes(list, node, matched_node);
-            has_merged = true;
 
         }
-
-    }
-
-    if (has_merged == false) {
-
-        /*
-        * No adjacent Nodes were found.
-        * Thus we keep this Node in the LinkedList.
-        */
-        matched_data->is_free = true;
 
     }
 
