@@ -409,6 +409,8 @@ Node* merge_meta_data_nodes(LinkedList* list, Node* left_node, Node* right_node)
 
     // Remove the discarded Node from the LinkedList
     size_t id = right_node->id;
+    //TODO This should not free the Node, only remove it
+    //from the list.
     delete_node(list, id);
 
     return left_node;
@@ -778,6 +780,9 @@ Node* naive_search(size_t size) {
  */
 void allocator_free(void* ptr) {
 
+    printf("----- allocator_free has been called!\n");
+    fflush(stdout);
+
     if (current_alloc == NULL) {
 
         // There is no Allocator object to process
@@ -819,11 +824,20 @@ void allocator_free(void* ptr) {
 
     if (!matched_node) {
 
+        printf("---- No Node was found!\n");
+        fflush(stdout);
+
        /*
         * The corresponding Node was not found.
         * the Allocator has not given out this pointer.
         */
         return;
+
+    } else {
+
+        printf("----NODE ID %zu\n", matched_node->id);
+        printf("HERE\n");
+        fflush(stdout);
 
     }
 

@@ -148,6 +148,13 @@ LinkedList* delete_node(LinkedList* list, size_t id) {
 
 }
 
+
+LinkedList* drop_node(LinkedList* list, size_t id) {
+
+    return NULL;
+
+}
+
 size_t search_by_value(LinkedList* list, void* data, size_t data_size) {
 
     if (data == NULL || data_size == 0) {
