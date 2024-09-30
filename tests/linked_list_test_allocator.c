@@ -32,26 +32,38 @@ int main() {
     printf("\n%s\n", "Searching for node_2 by value");
     int found_id = search_by_value(list, &data_2, sizeof(data_2));
 
-    printf("Node ID found: %d", found_id);
+    printf("Node ID found: %d\n", found_id);
 
-    printf("\n%s\n", "Trying to remove a node from the list");
-
-    // Delete the first Node in the list
-    delete_node(list, 3);
-    node_4 = NULL;
-
-    printf("%s\n", "Node removed");
 
     printf("%s\n", "Printing the content of the Nodes");
 
     // Create a corresponding iterator
-    LinkedListIterator* iter = create_iterator(list);
+    LinkedListIterator iter;
+    iter.current = get_head(list);
 
-    while (has_next(iter)) {
+    while (has_next(&iter)) {
 
-        Node* node = next(iter);
+        Node* node = next(&iter);
 
         printf("Node ID: %zu\n", node->id);
+
+        if (node->id == 1) {
+
+            // Delete the first Node in the list
+            Node* dropped_node = drop_node(list, 2);
+            printf("Removed Node: %zu\n", dropped_node->id);
+
+            // Reset the iterator to start at the Node
+            // coming after current Node (as its no longer 2).
+            iter.current = node->next;
+
+            if (node) {
+
+                printf("Next node has ID: %zu\n", node->next->id);
+
+            }
+
+        }
 
         if (node->data_size == sizeof(int)) {
 
@@ -62,10 +74,6 @@ int main() {
         }
 
     }
-
-    // Free from memory
-    destroy_iterator(iter);
-    destroy_list(list);
 
     printf("%s", "----TEST ENDED----\n");
 

@@ -432,11 +432,10 @@ void cleanse_user_pool() {
      * are done).
      *
      * We swap the memory block of the snowball
-     * Node with the non-free Node.
-     *
-     * We do not update the order in the LinkedList, as this
-     * can be done at the end using merge sort for code
-     * simplicity as the function is already O(nlogn).
+     * Node with the non-free Node. By swapping, we move
+     * the allocated data from the non-free Node to the
+     * free Node. Then, we update the 'block_size' and
+     * 'is_free' member variables of each Node.
      *
      * We then check if the snowball Node can merge with the
      * right-adjacent Node (add to the snowball).
@@ -493,22 +492,31 @@ void cleanse_user_pool() {
          * Temporarily store the data on the stack, then perform
          * the swapping of the Nodes.
          */
-        size_t snowball_node_block_size = snowball_data->block_size;
-        char* non_memory_start = data->memory_start;
+        size_t snowball_block_size = snowball_data->block_size;
 
         // Move the non-free Node to the memory start of the snowball Node
-        data->memory_start = snowball_data->memory_start;
+        snowball_data->block_size = data->block_size;
+        snowball_data->is_free = false;
         memcpy(
             snowball_data->memory_start,
             data->memory_start,
             data->block_size
         );
 
-        // Move the snowball (don't care about allocated data since its free)
-        snowball_data->memory_start = non_memory_start;
+        /*
+         * Swap the content of the Nodes, but keep the
+         * Nodes and their reference in the list the same.
+         */
 
-        // See if the free Node can merged with the right-adjacent Node
-        Node* merge_node = node->next;
+        // Move the snowball (don't care about allocated data since its free)
+        data->block_size = snowball_block_size;
+        data->is_free = true;
+
+        // Update where the snowball Node is
+        snowball_node = node;
+
+        // See if the snowball Node can merged with the right-adjacent Node
+        Node* merge_node = snowball_node->next;
         if (merge_node) {
 
             MemoryData* merge_data = (MemoryData*) merge_node->data;
@@ -523,7 +531,7 @@ void cleanse_user_pool() {
 
     } // End while
 
-    merge_sort_list(list);
+    //merge_sort_list(list);
 
 }
 
