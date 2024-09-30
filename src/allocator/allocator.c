@@ -311,6 +311,8 @@ Node* merge_meta_data_nodes(LinkedList* list, Node* left_node, Node* right_node)
     // Check that the 'left_node' is left adjacent to 'right_node'
     if (left_data->memory_start + left_data->block_size != right_data->memory_start) {
 
+        printf("Node is not left adjacent\n");
+        fflush(stdout);
         return NULL;
 
     }
@@ -430,8 +432,11 @@ void cleanse_user_pool() {
      * are done).
      *
      * We swap the memory block of the snowball
-     * Node with the non-free Node and update the
-     * 'next' reference for the LinkedList accordingly.
+     * Node with the non-free Node.
+     *
+     * We do not update the order in the LinkedList, as this
+     * can be done at the end using merge sort for code
+     * simplicity as the function is already O(nlogn).
      *
      * We then check if the snowball Node can merge with the
      * right-adjacent Node (add to the snowball).
@@ -444,10 +449,8 @@ void cleanse_user_pool() {
      */
     iter.current = get_head(list);
 
-    char* optimal_memory_start = current_alloc->heap_start;
-
-    // Locate the first free Node
-    Node* free_node = NULL;
+    // Locate the first free Node (snowball Node)
+    Node* snowball_node = NULL;
     while (has_next(&iter)) {
 
         Node* node = next(&iter);
@@ -455,21 +458,23 @@ void cleanse_user_pool() {
 
         if (data->is_free) {
 
-            free_node = node;
+            snowball_node = node;
             break;
 
         }
 
     }
 
-    if (!free_node) {
+    if (!snowball_node) {
 
         // There is no free Node, the heap must be full
         return;
 
     }
 
-    // Perform the Node swapping and float the free Node to the higher memory
+    /*
+     * Perform the Node swapping and float the snowball to higher memory.
+     */
     while (has_next(&iter)) {
 
         Node* node = next(&iter);
@@ -478,49 +483,47 @@ void cleanse_user_pool() {
         if (data->is_free) {
 
             printf("The next Node is free, this is not supposed to be\n");
+            return;
 
         }
 
-        MemoryData* free_data = (MemoryData*) free_node->data;
+        MemoryData* snowball_data = (MemoryData*) snowball_node->data;
 
         /*
-         * Temporarily store the data on the stack.
-         * We are only interested in the block_size.
+         * Temporarily store the data on the stack, then perform
+         * the swapping of the Nodes.
          */
-        size_t free_node_block_size = free_data->block_size;
+        size_t snowball_node_block_size = snowball_data->block_size;
         char* non_memory_start = data->memory_start;
 
-        // Move the non-free Node to the memory start of the free Node
+        // Move the non-free Node to the memory start of the snowball Node
+        data->memory_start = snowball_data->memory_start;
         memcpy(
-            free_data->memory_start,
+            snowball_data->memory_start,
             data->memory_start,
             data->block_size
         );
 
-        data->memory_start = free_data->memory_start;
-
-        // Move the free Node
-        free_data->memory_start = non_memory_start;
-
-        // Swap their order in the list
-        Node* temp_next = node->next;
-        node->next = free_node->next;
-        free_node->next = temp_next;
+        // Move the snowball (don't care about allocated data since its free)
+        snowball_data->memory_start = non_memory_start;
 
         // See if the free Node can merged with the right-adjacent Node
-        if (!free_node->next) {
+        Node* merge_node = node->next;
+        if (merge_node) {
 
-            MemoryData* merge_data = (MemoryData*) free_node->data;
+            MemoryData* merge_data = (MemoryData*) merge_node->data;
             if (merge_data->is_free) {
 
                 // It is free, thus we merge
-                merge_meta_data_nodes(list, free_node, free_node->next);
+                merge_meta_data_nodes(list, snowball_node, merge_node);
 
             }
 
         }
 
     } // End while
+
+    merge_sort_list(list);
 
 }
 
