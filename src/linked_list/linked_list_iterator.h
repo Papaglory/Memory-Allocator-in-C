@@ -1,3 +1,18 @@
+/*
+ * @file linked_list_iterator.h
+ * @brief Iterator to traverse a LinkedList.
+ *
+ * @note When modifying the list (e.g., merging or deleting nodes),
+ * you should manually manage the position of the iterator to avoid
+ * it getting out of sync with the list structure. After merging nodes,
+ * the iterator's `current` node should be manually updated to the
+ * appropriate position (typically the node after the merged nodes).
+ *
+ * TLDR, the next() function stores the current Node, then updates
+ * the 'current' member variable, then returns the stored Node.
+ * Thus, the update happens immediately when calling next().
+ */
+
 #ifndef LINKEDLISTITERATOR_H
 #define LINKEDLISTITERATOR_H
 

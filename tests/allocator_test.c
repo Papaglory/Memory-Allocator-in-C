@@ -245,9 +245,9 @@ void free_test() {
 }
 
 
-void cleanse_pools_test() {
+void cleanse_reserved_pool_test() {
 
-    printf("\n%s\n", "STARTING TEST: cleanse_pools_test");
+    printf("\n%s\n", "STARTING TEST: cleanse_reserved_pool_test");
 
     Allocator* alloc = create_allocator(800);
     set_allocator(alloc);
@@ -301,7 +301,61 @@ void cleanse_pools_test() {
 
 }
 
+void cleanse_user_pool_test() {
 
+    printf("\n%s\n", "STARTING TEST: cleanse_user_pool_test");
+
+    Allocator* alloc = create_allocator(800);
+    set_allocator(alloc);
+
+    print_allocator_stats(alloc);
+
+    int* my_int = allocator_malloc(sizeof(int));
+    *my_int = 42;
+
+    int align_size = 16;
+    int* my_int2 = allocator_malloc(sizeof(int));
+
+    *my_int = 49;
+
+    printf("%-*s%p\n", align_size, "Address of int:", my_int);
+    printf("%-*s%d\n", align_size, "Value of int:", *my_int);
+
+    print_allocator_stats(alloc);
+
+    print_list_stats(alloc->list);
+
+    size_t* my_size = allocator_malloc(sizeof(size_t));
+    *my_size = 101;
+
+    printf("%-*s%p\n", align_size, "Address of size_t:", my_size);
+    printf("%-*s%zu\n", align_size, "Value of size:", *my_size);
+
+    print_allocator_stats(alloc);
+
+    print_list_stats(alloc->list);
+
+    printf("Calling Allocator free\n");
+    allocator_free(my_int);
+
+    print_allocator_stats(alloc);
+    print_list_stats(alloc->list);
+
+    printf("Calling Allocator free\n");
+    allocator_free(my_size);
+
+    print_allocator_stats(alloc);
+    print_list_stats(alloc->list);
+
+    printf("Calling cleanse_user_pool\n");
+    cleanse_user_pool();
+    print_allocator_stats(alloc);
+
+    print_list_stats(alloc->list);
+
+    destroy_allocator();
+
+}
 
 int main() {
 
@@ -315,7 +369,9 @@ int main() {
 
     //free_test();
 
-    cleanse_pools_test();
+    //cleanse_reserved_pool_test();
+
+    cleanse_user_pool_test();
 
     printf("\n%s\n", "----TEST ENDED----");
 
