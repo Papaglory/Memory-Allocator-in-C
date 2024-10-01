@@ -101,6 +101,9 @@ typedef struct {
     // Size of the reserved pool
     size_t reserved_pool_size;
 
+    // The size of a meta data Node used for the LinkedList
+    size_t meta_data_node_size;
+
     LinkedList* list;
 
 } Allocator;

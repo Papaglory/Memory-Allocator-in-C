@@ -427,6 +427,48 @@ void realloc_test() {
 }
 
 
+void foo() {
+
+    printf("\n%s\n", "STARTING TEST: heap_full_test");
+
+    Allocator* alloc = create_allocator(160);
+    set_allocator(alloc);
+
+    int* my_int = allocator_malloc(sizeof(int));
+    *my_int = 42;
+
+    int align_size = 16;
+
+    printf("%-*s%p\n", align_size, "Address of int:", my_int);
+    printf("%-*s%d\n", align_size, "Value of int:", *my_int);
+
+    print_allocator_stats(alloc);
+    print_list_stats(alloc->list);
+
+
+}
+
+void heap_full_test() {
+
+    printf("\n%s\n", "STARTING TEST: heap_full_test");
+
+    Allocator* alloc = create_allocator(160);
+    set_allocator(alloc);
+
+    print_allocator_stats(alloc);
+    print_list_stats(alloc->list);
+
+    int* my_int = allocator_malloc(sizeof(int));
+
+    print_allocator_stats(alloc);
+    print_list_stats(alloc->list);
+
+    destroy_allocator();
+
+}
+
+
+
 int main() {
 
     // Seed the random number generator
@@ -443,9 +485,19 @@ int main() {
 
     //cleanse_user_pool_test();
 
+    //realloc_test();
+     heap_full_test();
 
-     realloc_test();
-    // heap_full_test();
+
+    /*
+     * TODO
+     *
+     * Implement padding.
+     *
+     *
+     * Have multiple LinkedList, 8 bytes, 16 bytes, etc.?
+     *
+    */
 
     printf("\n%s\n", "----TEST ENDED----");
 
