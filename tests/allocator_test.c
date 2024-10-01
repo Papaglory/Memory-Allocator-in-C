@@ -417,17 +417,10 @@ void realloc_test() {
     arr = allocator_realloc(arr, arr_size*sizeof(int));
 
     print_allocator_stats(alloc);
-
     print_list_stats(alloc->list);
 
 
-    cleanse_user_pool();
-
-
-    print_allocator_stats(alloc);
-
-    print_list_stats(alloc->list);
-
+    printf("myint2: %d", *my_int2);
 
     destroy_allocator();
 
