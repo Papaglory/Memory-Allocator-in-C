@@ -301,7 +301,6 @@ void cleanse_reserved_pool_test() {
 
 }
 
-
 void cleanse_user_pool_test() {
 
     printf("\n%s\n", "STARTING TEST: cleanse_user_pool_test");

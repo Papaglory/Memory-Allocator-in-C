@@ -525,13 +525,21 @@ void cleanse_user_pool() {
                 // It is free, thus we merge
                 merge_meta_data_nodes(list, snowball_node, merge_node);
 
+                /*
+                 * Having merged with the next Node, we need to
+                 * reset the iterator to start at the Node
+                 * coming after the newly merged Node. This is
+                 * because the iterator updates itself when calling
+                 * next(), thus it currently points at the Node
+                 * that was discarded during the merge.
+                 */
+                iter.current = snowball_node->next;
+
             }
 
         }
 
     } // End while
-
-    //merge_sort_list(list);
 
 }
 
