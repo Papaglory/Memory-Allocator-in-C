@@ -308,6 +308,10 @@ Node* merge_meta_data_nodes(LinkedList* list, Node* left_node, Node* right_node)
     MemoryData* left_data = left_node->data;
     MemoryData* right_data = right_node->data;
 
+    printf("left_start:%p\n", left_data->memory_start);
+    printf("left_end:%p\n", left_data->memory_start + left_data->block_size);
+    printf("right_start:%p\n", right_data->memory_start);
+
     // Check that the 'left_node' is left adjacent to 'right_node'
     if (left_data->memory_start + left_data->block_size != right_data->memory_start) {
 
@@ -479,6 +483,8 @@ void cleanse_user_pool() {
         Node* node = next(&iter);
         MemoryData* data = (MemoryData*) node->data;
 
+        printf("Nodeid: %zu\n", node->id);
+
         if (data->is_free) {
 
             printf("The next Node is free, this is not supposed to be\n");
@@ -516,14 +522,21 @@ void cleanse_user_pool() {
         snowball_node = node;
 
         // See if the snowball Node can merged with the right-adjacent Node
-        Node* merge_node = snowball_node->next;
-        if (merge_node) {
+        Node* right_node = snowball_node->next;
+        if (right_node) {
 
-            MemoryData* merge_data = (MemoryData*) merge_node->data;
-            if (merge_data->is_free) {
+            MemoryData* right_data = (MemoryData*) right_node->data;
+            if (right_data->is_free) {
+
+                printf("Merging now-------\n");
+                printf("leftID: %zu\n", snowball_node->id);
+                printf("rightID: %zu\n", right_node->id);
+
+
 
                 // It is free, thus we merge
-                merge_meta_data_nodes(list, snowball_node, merge_node);
+                merge_meta_data_nodes(list, snowball_node, right_node);
+
 
                 /*
                  * Having merged with the next Node, we need to
@@ -654,7 +667,7 @@ void cleanse_reserved_pool() {
  */
 Node* create_residual_node(Node* node, size_t residual_size) {
 
-    if (!node) { return NULL; }
+    if (!node || residual_size == 0) { return NULL; }
 
     MemoryData* data = (MemoryData*) node->data;
 
@@ -936,17 +949,14 @@ void* allocator_realloc(void* ptr, size_t size) {
     iter.current = list->head;
 
     /*
-     * Have the left adjacent Node for potensially merging
-     * to aquire desired new memory block size later in the
-     * function.
+     * Retrieve the left adjacent Node for potensially merging
+     * later in the function.
      */
     Node* prev_node = NULL;
 
     // Search for Node corresponding to argument pointer
     Node* ptr_node = NULL;
     while (has_next(&iter)) {
-
-        prev_node = ptr_node;
 
         Node* node = next(&iter);
         MemoryData* data = node->data;
@@ -955,10 +965,11 @@ void* allocator_realloc(void* ptr, size_t size) {
 
             // corresponding Node has been found
             ptr_node = node;
-
             break;
 
         }
+
+        prev_node = node;
 
     } // End while
 
@@ -967,13 +978,15 @@ void* allocator_realloc(void* ptr, size_t size) {
 
     MemoryData* ptr_data = (MemoryData*) ptr_node->data;
 
+    // Check that it not already freed
+    if (ptr_data->is_free) { return NULL; }
+
     if (size == ptr_data->block_size) {
 
         /*
          * The function call has requested a realloc
          * where the memory block size remains the same.
          */
-
         return ptr;
 
     } else if (size < ptr_data->block_size) {
@@ -1020,7 +1033,6 @@ void* allocator_realloc(void* ptr, size_t size) {
 
         if (prev_data->is_free) {
 
-            // Merge the Nodes to have more space
             left_node_free = true;
             left_node_size = prev_data->block_size;
 
@@ -1036,7 +1048,6 @@ void* allocator_realloc(void* ptr, size_t size) {
 
         if (next_data->is_free) {
 
-            // Merge the Nodes to have more space
             right_node_free = true;
             right_node_size = next_data->block_size;
 
@@ -1064,7 +1075,7 @@ void* allocator_realloc(void* ptr, size_t size) {
 
         add(list, residual_node);
 
-        return merged_node;
+        return merged_data->memory_start;
 
     } else if (
         left_node_free &&
@@ -1075,13 +1086,19 @@ void* allocator_realloc(void* ptr, size_t size) {
         Node* merged_node = merge_meta_data_nodes(list, prev_node, ptr_node);
         MemoryData* merged_data = (MemoryData*) merged_node->data;
 
+        /*
+         * Since merging keeps the left Node, which was free in this case,
+         * we need to set the newly merged Node to non-free.
+         */
+        merged_data->is_free = false;
+
         // Need to split up such that the residual memory is in a free node
         size_t residual_block_size = merged_data->block_size - size;
         Node* residual_node = create_residual_node(merged_node, residual_block_size);
 
         add(list, residual_node);
 
-        return merged_node;
+        return merged_data->memory_start;
 
     } else if (
         left_node_free &&
@@ -1094,6 +1111,11 @@ void* allocator_realloc(void* ptr, size_t size) {
         merged_node = merge_meta_data_nodes(list, prev_node, merged_node);
 
         MemoryData* merged_data = (MemoryData*) merged_node->data;
+        /*
+         * Since merging keeps the left Node, which was free in this case,
+         * we need to set the newly merged Node to non-free.
+         */
+        merged_data->is_free = false;
 
         // Need to split up such that the residual memory is in a free node
         size_t residual_block_size = merged_data->block_size - size;
@@ -1101,7 +1123,7 @@ void* allocator_realloc(void* ptr, size_t size) {
 
         add(list, residual_node);
 
-        return merged_node;
+        return merged_data->memory_start;
 
     } else {
 
@@ -1126,8 +1148,6 @@ void* allocator_realloc(void* ptr, size_t size) {
         return new_location;
 
     }
-
-    // Reallocation was not possible
 
     return NULL;
 

@@ -357,6 +357,83 @@ void cleanse_user_pool_test() {
 
 }
 
+
+void realloc_test() {
+
+    printf("\n%s\n", "STARTING TEST: realloc_test");
+
+    Allocator* alloc = create_allocator(800);
+    set_allocator(alloc);
+
+    print_allocator_stats(alloc);
+
+    int* my_int = allocator_malloc(sizeof(int));
+    *my_int = 42;
+
+    int arr_size = 4;
+    int* arr = allocator_malloc(arr_size * sizeof(int));
+
+    arr[0] = 10;
+    arr[1] = 41;
+    arr[2] = 42;
+    arr[3] = 101;
+
+    int align_size = 16;
+    int* my_int2 = allocator_malloc(sizeof(int));
+
+    *my_int2 = 49;
+
+    printf("%-*s%p\n", align_size, "Address of int:", my_int);
+    printf("%-*s%d\n", align_size, "Value of int:", *my_int);
+
+    print_allocator_stats(alloc);
+
+    print_list_stats(alloc->list);
+
+    size_t* my_size = allocator_malloc(sizeof(size_t));
+    *my_size = 101;
+
+    printf("%-*s%p\n", align_size, "Address of size_t:", my_size);
+    printf("%-*s%zu\n", align_size, "Value of size:", *my_size);
+
+    print_allocator_stats(alloc);
+
+    print_list_stats(alloc->list);
+
+    // Free for array space
+    //allocator_free(my_int);
+    //allocator_free(my_int2);
+
+    /*
+     *
+     * Because my_int was free, by merging we turned the
+     * array which was non-free into free!
+     */
+
+    // Resize the array
+    arr_size = 6;
+
+    printf("Realloc called\n");
+    arr = allocator_realloc(arr, arr_size*sizeof(int));
+
+    print_allocator_stats(alloc);
+
+    print_list_stats(alloc->list);
+
+
+    cleanse_user_pool();
+
+
+    print_allocator_stats(alloc);
+
+    print_list_stats(alloc->list);
+
+
+    destroy_allocator();
+
+}
+
+
 int main() {
 
     // Seed the random number generator
@@ -371,7 +448,11 @@ int main() {
 
     //cleanse_reserved_pool_test();
 
-    cleanse_user_pool_test();
+    //cleanse_user_pool_test();
+
+
+     realloc_test();
+    // heap_full_test();
 
     printf("\n%s\n", "----TEST ENDED----");
 
