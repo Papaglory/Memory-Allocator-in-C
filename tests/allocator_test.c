@@ -480,19 +480,10 @@ int main() {
 
     //cleanse_user_pool_test();
 
-    //realloc_test();
+    realloc_test();
     //heap_full_test();
 
 
-    /*
-     * TODO
-     *
-     * Implement padding.
-     *
-     *
-     * Have multiple LinkedList, 8 bytes, 16 bytes, etc.?
-     *
-    */
 
     printf("\n%s\n", "----TEST ENDED----");
 

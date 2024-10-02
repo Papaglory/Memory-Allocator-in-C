@@ -222,7 +222,6 @@ bool pool_overlap(size_t increase) {
          */
         cleanse_user_pool();
         cleanse_reserved_pool();
-        printf("HERE\n");
 
         // Retrieve the cleansed memory pool borders
         user_border = retrieve_user_pool_border();
@@ -257,7 +256,6 @@ void increase_reserved_pool(size_t increase) {
     if (pool_overlap(increase) == true) {
 
         // There is an overlap, the heap is considered full
-        perror("There is an unavoidable pool overlap, the heap is full\n");
         return;
 
     }
@@ -280,7 +278,8 @@ void increase_reserved_pool(size_t increase) {
     Node* tail = list->tail;
     if (!tail) {
 
-        perror("increase_reserved_pool: There is no tail\n");
+        // There is no tail
+        return;
 
     }
 
@@ -343,8 +342,6 @@ Node* merge_meta_data_nodes(LinkedList* list, Node* left_node, Node* right_node)
     // Check that the 'left_node' is left adjacent to 'right_node'
     if (left_data->memory_start + left_data->block_size != right_data->memory_start) {
 
-        printf("Node is not left adjacent\n");
-        fflush(stdout);
         return NULL;
 
     }
@@ -589,7 +586,6 @@ Node* create_residual_node(Node* node, size_t residual_size) {
          * The size of the memory block of the residual Node has
          * to be smaller than the block size of the original Node.
          */
-        perror("To little memory to perform the residual split");
         return NULL;
 
     }
@@ -601,18 +597,11 @@ Node* create_residual_node(Node* node, size_t residual_size) {
         - residual_size;
     bool residual_is_free = true;
 
-    printf("original memory_start: %p\n", data->memory_start);
-    printf("original size: %zu\n", data->block_size);
-
-    printf("residual memory_start: %p\n", residual_memory_start);
-    printf("residual size: %zu\n", residual_size);
-    printf("\n");
     Node* residual_node = create_metadata_node(
         residual_memory_start,
         residual_size,
         residual_is_free
     );
-    printf("original after size: %zu\n", data->block_size);
 
     // Subtract the residual size from the original Node
 
@@ -671,7 +660,7 @@ void* allocator_malloc(size_t required_size) {
 
         if (available_node == NULL) {
 
-            perror("The managed heap is full\n");
+            // The managed heap is full
             return NULL;
 
         }
@@ -776,9 +765,6 @@ Node* naive_search(size_t size) {
  */
 void allocator_free(void* ptr) {
 
-    printf("----- allocator_free has been called!\n");
-    fflush(stdout);
-
     if (current_alloc == NULL) {
 
         // There is no Allocator object to process
@@ -819,9 +805,6 @@ void allocator_free(void* ptr) {
     }
 
     if (!matched_node) {
-
-        printf("----FREE: No Node was found!\n");
-        fflush(stdout);
 
        /*
         * The corresponding Node was not found.
