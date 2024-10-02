@@ -228,10 +228,12 @@ void set_allocator(Allocator* alloc);
 */
 void release_allocator();
 
-
-
-// TODO remove this when done with testing
-Node* create_residual_node(Node* node, size_t residual_size);
-
+/*
+* @brief Align the input to be a factor of 8.
+*
+* @param The size we want to align to a factor of 8.
+* @return The input 'size' realigned.
+*/
+size_t align_size(size_t size);
 
 #endif

@@ -174,7 +174,6 @@ char* retrieve_user_pool_border() {
 
 }
 
-
 /*
  * @brief Determines if the user pool and reserved pool will
  * overlap if we increase one of the borders by 'increase'.
@@ -1103,5 +1102,12 @@ void set_allocator(Allocator* alloc) {
 void release_allocator() {
 
     current_alloc = NULL;
+
+}
+
+
+size_t align_size(size_t size) {
+
+    return (size + 7) & ~7;
 
 }

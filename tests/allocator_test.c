@@ -465,9 +465,23 @@ void heap_full_test() {
 
     destroy_allocator();
 
+
 }
 
+void align_size_test() {
 
+    size_t factor = 0;
+    while (factor < 20) {
+
+        printf("factor val: %zu\n", factor);
+        size_t res = align_size(factor);
+        printf("-----new val: %zu\n", res);
+
+        factor += 1;
+
+    }
+
+}
 
 int main() {
 
