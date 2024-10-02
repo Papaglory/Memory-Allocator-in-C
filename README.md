@@ -1,17 +1,12 @@
-# Custom Allocator in C
+## Description
 
+This project features a battleship that autonomously navigates the map in search of enemy vessels. When an enemy vessel is encountered, the battleship engages in combat and collects the remains of the ship.
 
-// Just some notes that might be useful to have written down somewhere:
+The decision-making process of the battleship is driven by utility AI, a system that uses mathematical functions and scoring systems to evaluate and prioritize actions based on their utility. This approach allows the battleship to make intelligent decisions in various scenarios, including combat and resource management.
 
+## Further Information
 
-For the following, there will be one implementation using the custom allocator
-and one using C's allocator:
+For a more in-depth look at this project, please refer to [mariusnaasen.com/projects/ai-warship](https://mariusnaasen.com/projects/ai-warship).
 
-- LinkedList
-- LinkedListIterator
-- Node
-
-There are kept two versions to keep as a reference implementation and for
-potensial debugging. This is done my duplicating the code base.
-There will be one standard version and one custom\_allocator version.
-There are corresponding directories in src and build.
+## Author
+Marius H. Naasen, originally created September 2024.
