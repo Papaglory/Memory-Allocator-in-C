@@ -17,15 +17,18 @@ static Allocator* current_alloc = NULL;
 
 Allocator* create_allocator(size_t heap_size) {
 
+    // Realign to a factor of 8 for memory efficency
+    heap_size = align_size(heap_size);
+
     /*
      * The heap size must be at least this large to accommodate the
      * initial Allocator metadata memory needed.
      */
     size_t initial_reserved_pool_size =
-        sizeof(Allocator)
-        + sizeof(LinkedList)
-        + sizeof(MemoryData)
-        + sizeof(Node);
+        align_size(sizeof(Allocator))
+        + align_size(sizeof(LinkedList))
+        + align_size(sizeof(MemoryData))
+        + align_size(sizeof(Node));
     if (heap_size <= initial_reserved_pool_size) {
 
         return NULL;
@@ -46,16 +49,16 @@ Allocator* create_allocator(size_t heap_size) {
     char* heap_end = heap_start + heap_size;
 
     // Initialize Allocator object at the end of the heap
-    Allocator* alloc = (Allocator*) (heap_end - sizeof(Allocator));
+    Allocator* alloc = (Allocator*) (heap_end - align_size(sizeof(Allocator)));
 
     // Set Allocator member variables
     alloc->heap_start = heap_start;
     alloc->heap_end = heap_end;
-    alloc->reserved_pool_border =  heap_end - sizeof(Allocator);
+    alloc->reserved_pool_border =  heap_end - align_size(sizeof(Allocator));
     alloc->initial_reserved_pool_size = initial_reserved_pool_size;
     alloc->heap_size = heap_size;
-    alloc->reserved_pool_size = sizeof(Allocator);
-    alloc->meta_data_node_size = sizeof(MemoryData) + sizeof(Node);
+    alloc->reserved_pool_size = align_size(sizeof(Allocator));
+    alloc->meta_data_node_size = align_size(sizeof(MemoryData)) + align_size(sizeof(Node));
 
     /*
      * Set the Allocator being used to let Allocator functions
@@ -69,8 +72,8 @@ Allocator* create_allocator(size_t heap_size) {
     set_allocator(alloc);
 
     // Increase the reserved pool to accommodate for the LinkedList
-    alloc->reserved_pool_border -= sizeof(LinkedList);
-    alloc->reserved_pool_size += sizeof(LinkedList);
+    alloc->reserved_pool_border -= align_size(sizeof(LinkedList));
+    alloc->reserved_pool_size += align_size(sizeof(LinkedList));
 
     // Initialize LinkedList object
     LinkedList* list = (LinkedList*) alloc->reserved_pool_border;
@@ -88,8 +91,8 @@ Allocator* create_allocator(size_t heap_size) {
     void* memory_start = heap_start;
 
     // Increase the reserved pool to accommodate for the MemoryData
-    alloc->reserved_pool_border -= sizeof(MemoryData);
-    alloc->reserved_pool_size += sizeof(MemoryData);
+    alloc->reserved_pool_border -= align_size(sizeof(MemoryData));
+    alloc->reserved_pool_size += align_size(sizeof(MemoryData));
 
     MemoryData* data = (MemoryData*) alloc->reserved_pool_border;
 
@@ -103,7 +106,7 @@ Allocator* create_allocator(size_t heap_size) {
     size_t block_size =
         heap_size
         - alloc->reserved_pool_size
-        - sizeof(Node);
+        - align_size(sizeof(Node));
     bool is_free = true;
     data->memory_start = memory_start;
     data->block_size = block_size;
@@ -111,14 +114,14 @@ Allocator* create_allocator(size_t heap_size) {
     data->in_use = true;
 
     // Increase the reserved pool to accommodate for the Node
-    alloc->reserved_pool_border -= sizeof(Node);
-    alloc->reserved_pool_size += sizeof(Node);
+    alloc->reserved_pool_border -= align_size(sizeof(Node));
+    alloc->reserved_pool_size += align_size(sizeof(Node));
 
     // Create Node containing the MemoryData
     Node* node = (Node*) alloc->reserved_pool_border;
 
     // Set Node member variables
-    node->data_size = sizeof(MemoryData);
+    node->data_size = align_size(sizeof(MemoryData));
     node->next = NULL;
     node->id = 0;
     node->data = (void*) data;
@@ -219,6 +222,7 @@ bool pool_overlap(size_t increase) {
          */
         cleanse_user_pool();
         cleanse_reserved_pool();
+        printf("HERE\n");
 
         // Retrieve the cleansed memory pool borders
         user_border = retrieve_user_pool_border();
@@ -239,6 +243,9 @@ bool pool_overlap(size_t increase) {
 }
 
 void increase_reserved_pool(size_t increase) {
+
+    // Make sure it is aligned to a factor of 8
+    increase = align_size(increase);
 
     if (current_alloc == NULL) {
 
@@ -284,6 +291,9 @@ void increase_reserved_pool(size_t increase) {
 
 Node* create_metadata_node(char* memory_start, size_t block_size, bool is_free) {
 
+    // Realign to a factor of 8 for memory efficency
+    block_size = align_size(block_size);
+
     if (current_alloc == NULL || memory_start == NULL) {
 
         // There is no Allocator to work on or function argument missing!
@@ -292,7 +302,7 @@ Node* create_metadata_node(char* memory_start, size_t block_size, bool is_free) 
     }
 
     // Increase the reserved pool to accommodate for the MemoryData
-    increase_reserved_pool(sizeof(MemoryData));
+    increase_reserved_pool(align_size(sizeof(MemoryData)));
 
     MemoryData* data = (MemoryData*) current_alloc->reserved_pool_border;
 
@@ -303,13 +313,13 @@ Node* create_metadata_node(char* memory_start, size_t block_size, bool is_free) 
     data->in_use = true;
 
     // Increase the reserved pool to accommodate for the Node
-    increase_reserved_pool(sizeof(Node));
+    increase_reserved_pool(align_size(sizeof(Node)));
 
     // Create Node containing the MemoryData
     Node* node = (Node*) current_alloc->reserved_pool_border;
 
     // Set Node member variables
-    node->data_size = sizeof(MemoryData);
+    node->data_size = align_size(sizeof(MemoryData));
     node->next = NULL;
     node->id = 0;
     node->data = (void*) data;
@@ -330,10 +340,6 @@ Node* merge_meta_data_nodes(LinkedList* list, Node* left_node, Node* right_node)
     MemoryData* left_data = left_node->data;
     MemoryData* right_data = right_node->data;
 
-    printf("left_start:%p\n", left_data->memory_start);
-    printf("left_end:%p\n", left_data->memory_start + left_data->block_size);
-    printf("right_start:%p\n", right_data->memory_start);
-
     // Check that the 'left_node' is left adjacent to 'right_node'
     if (left_data->memory_start + left_data->block_size != right_data->memory_start) {
 
@@ -345,8 +351,6 @@ Node* merge_meta_data_nodes(LinkedList* list, Node* left_node, Node* right_node)
 
     // merge the block sizes
     left_data->block_size += right_data->block_size;
-
-    printf("-----new block_size: %zu\n", left_data->block_size);
 
     // Mark the right Node as vacant
     right_data->in_use = false;
@@ -486,7 +490,7 @@ void cleanse_reserved_pool() {
     Node* tail = list->tail;
 
     // This will be the increments when doing metadata Node traversal
-    size_t meta_data_node_size = sizeof(Node) + sizeof(MemoryData);
+    size_t meta_data_node_size = align_size(sizeof(Node)) + align_size(sizeof(MemoryData));
 
     /*
      * Memory location for the start of metadata Node traversal.
@@ -503,7 +507,7 @@ void cleanse_reserved_pool() {
     while (meta_data_node >= current_alloc->reserved_pool_border) {
 
         // Retrieve Node's corresponding MemoryData
-        MemoryData* data = (MemoryData*) (meta_data_node + sizeof(Node));
+        MemoryData* data = (MemoryData*) (meta_data_node + align_size(sizeof(Node)));
 
         /*
          * Check if we have found a Node that is not
@@ -572,6 +576,9 @@ void cleanse_reserved_pool() {
  */
 Node* create_residual_node(Node* node, size_t residual_size) {
 
+    // Realign to a factor of 8 for memory efficency
+    residual_size = align_size(residual_size);
+
     if (!node || residual_size == 0) { return NULL; }
 
     MemoryData* data = (MemoryData*) node->data;
@@ -582,6 +589,7 @@ Node* create_residual_node(Node* node, size_t residual_size) {
          * The size of the memory block of the residual Node has
          * to be smaller than the block size of the original Node.
          */
+        perror("To little memory to perform the residual split");
         return NULL;
 
     }
@@ -593,19 +601,50 @@ Node* create_residual_node(Node* node, size_t residual_size) {
         - residual_size;
     bool residual_is_free = true;
 
+    printf("original memory_start: %p\n", data->memory_start);
+    printf("original size: %zu\n", data->block_size);
+
+    printf("residual memory_start: %p\n", residual_memory_start);
+    printf("residual size: %zu\n", residual_size);
+    printf("\n");
     Node* residual_node = create_metadata_node(
         residual_memory_start,
         residual_size,
         residual_is_free
     );
+    printf("original after size: %zu\n", data->block_size);
 
     // Subtract the residual size from the original Node
+
+    /*
+     * TODO this part of the code works, but it should be
+     * refactored. The problem is that during the
+     * create_metadata_node call, the reserved pool border
+     * is increased, taking memory from the tail Node
+     * as intended. However, this alters the block size
+     * of the tail Node. When we then in the code below
+     * want to simply subtract the residual size because
+     * that is what is being given to the residual Node,
+     * we now have the issue that the orignal Node
+     * no longer is the tail node, but the residual Node
+     * is. Thus, we need to add back the memory for
+     * creating the meta data node and instead subtract
+     * that from the residual node as that is the new tail
+     * which is next to the reserved pool border.
+     */
+    data->block_size += current_alloc->meta_data_node_size;
     data->block_size -= residual_size;
+    MemoryData* residual_data = (MemoryData*) residual_node->data;
+    residual_data->block_size -= current_alloc->meta_data_node_size;
 
     return residual_node;
+
 }
 
 void* allocator_malloc(size_t required_size) {
+
+    // Realign to a factor of 8 for memory efficency
+    required_size = align_size(required_size);
 
     if (current_alloc == NULL) {
 
@@ -632,7 +671,7 @@ void* allocator_malloc(size_t required_size) {
 
         if (available_node == NULL) {
 
-            perror("The managed heap is full");
+            perror("The managed heap is full\n");
             return NULL;
 
         }
@@ -659,7 +698,7 @@ void* allocator_malloc(size_t required_size) {
     } else {
 
         // See if there is enough space to create a metadata Node
-        if (!pool_overlap(current_alloc->meta_data_node_size)) {
+        if (pool_overlap(current_alloc->meta_data_node_size)) {
 
             /*
              * There is not enough space to create more metadata Nodes.
@@ -689,6 +728,9 @@ void* allocator_malloc(size_t required_size) {
 }
 
 Node* naive_search(size_t size) {
+
+    // Realign to a factor of 8 for memory efficency
+    size = align_size(size);
 
     // Loop through the LinkedList and find the first vacant memory block
     LinkedListIterator iter;
@@ -778,7 +820,7 @@ void allocator_free(void* ptr) {
 
     if (!matched_node) {
 
-        printf("---- No Node was found!\n");
+        printf("----FREE: No Node was found!\n");
         fflush(stdout);
 
        /*
@@ -786,11 +828,6 @@ void allocator_free(void* ptr) {
         * the Allocator has not given out this pointer.
         */
         return;
-
-    } else {
-
-        printf("----NODE ID %zu\n", matched_node->id);
-        fflush(stdout);
 
     }
 
@@ -852,6 +889,9 @@ void allocator_free(void* ptr) {
 }
 
 void* allocator_realloc(void* ptr, size_t size) {
+
+    // Realign to a factor of 8 for memory efficency
+    size = align_size(size);
 
     if (!current_alloc || !ptr) { return NULL; }
 
@@ -1104,7 +1144,6 @@ void release_allocator() {
     current_alloc = NULL;
 
 }
-
 
 size_t align_size(size_t size) {
 

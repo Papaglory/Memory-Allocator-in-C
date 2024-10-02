@@ -116,21 +116,13 @@ void print_list_stats(LinkedList* list) {
 void creation_test() {
 
     printf("\n%s\n", "STARTING TEST: creation_test");
-    // 152 bytes is the limit to create an Allocator atm
+
     Allocator* alloc = create_allocator(800);
     set_allocator(alloc);
 
     print_allocator_stats(alloc);
 
     LinkedList* list = alloc->list;
-    print_list_stats(list);
-
-    printf("Calling create residual node\n");
-    fflush(stdout);
-    Node* residual_node = create_residual_node(list->head, 10);
-
-    add(list, residual_node);
-    merge_sort_list(list);
 
     print_list_stats(list);
 
@@ -146,28 +138,18 @@ void malloc_test() {
     set_allocator(alloc);
 
     print_allocator_stats(alloc);
+    print_list_stats(alloc->list);
 
     int* my_int = allocator_malloc(sizeof(int));
     *my_int = 42;
 
     int align_size = 16;
-
     printf("%-*s%p\n", align_size, "Address of int:", my_int);
     printf("%-*s%d\n", align_size, "Value of int:", *my_int);
 
     print_allocator_stats(alloc);
-
     print_list_stats(alloc->list);
 
-    size_t* my_size = allocator_malloc(sizeof(size_t));
-    *my_size = 101;
-
-    printf("%-*s%p\n", align_size, "Address of size_t:", my_size);
-    printf("%-*s%zu\n", align_size, "Value of size:", *my_size);
-
-    print_allocator_stats(alloc);
-
-    print_list_stats(alloc->list);
 
     destroy_allocator();
 
@@ -465,7 +447,6 @@ void heap_full_test() {
 
     destroy_allocator();
 
-
 }
 
 void align_size_test() {
@@ -491,7 +472,7 @@ int main() {
     printf("\n%s\n", "----TEST STARTED----");
     //creation_test();
 
-    //malloc_test();
+    malloc_test();
 
     //free_test();
 
@@ -500,7 +481,7 @@ int main() {
     //cleanse_user_pool_test();
 
     //realloc_test();
-     heap_full_test();
+    //heap_full_test();
 
 
     /*

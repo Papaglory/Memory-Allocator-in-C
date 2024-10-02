@@ -70,6 +70,7 @@
 #define ALLOCATOR_H
 
 #include "../linked_list/linked_list.h"
+#include "../other_modules/memory_data.h"
 #include<stddef.h>
 #include <stdbool.h>
 
