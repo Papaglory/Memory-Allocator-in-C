@@ -70,6 +70,7 @@
 #define ALLOCATOR_H
 
 #include "../linked_list/linked_list.h"
+#include "../other_modules/memory_data.h"
 #include<stddef.h>
 #include <stdbool.h>
 
@@ -100,6 +101,9 @@ typedef struct {
 
     // Size of the reserved pool
     size_t reserved_pool_size;
+
+    // The size of a meta data Node used for the LinkedList
+    size_t meta_data_node_size;
 
     LinkedList* list;
 
@@ -225,10 +229,12 @@ void set_allocator(Allocator* alloc);
 */
 void release_allocator();
 
-
-
-// TODO remove this when done with testing
-Node* create_residual_node(Node* node, size_t residual_size);
-
+/*
+* @brief Align the input to be a factor of 8.
+*
+* @param The size we want to align to a factor of 8.
+* @return The input 'size' realigned.
+*/
+size_t align_size(size_t size);
 
 #endif
