@@ -1,0 +1,29 @@
+#!/bin/bash
+
+# This file is supposed to be run in the root folder
+# Had trobule with the makefile so added this separate
+# bash script to create the test executables.
+
+# Make variable names for the test file
+TEST_FILE="tests/allocator_test.c"
+OUTPUT_FILE="my_test"
+
+# Clean and make a new build using make
+make clean
+make
+
+# Remove the my_test
+rm $OUTPUT_FILE
+
+# Manually make the test file
+gcc -c $TEST_FILE -o build/$(basename $TEST_FILE .c).o
+
+# Remove the main.o file to only have one main()
+rm build/main.o
+
+# Create a binary file consisting of the test file
+gcc -g $(find ./build -name "*.o") -o $OUTPUT_FILE
+chmod +x $OUTPUT_FILE
+
+# Run the test file
+./my_test
